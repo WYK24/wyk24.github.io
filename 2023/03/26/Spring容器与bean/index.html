@@ -1,0 +1,1160 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/tree.png">
+  <link rel="icon" href="/img/tree.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="程序员小魏">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="深度刨析SpringBean的相关底层知识">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring容器与bean">
+<meta property="og:url" content="http://example.com/2023/03/26/Spring%E5%AE%B9%E5%99%A8%E4%B8%8Ebean/index.html">
+<meta property="og:site_name" content="程序员小魏的后端之旅">
+<meta property="og:description" content="深度刨析SpringBean的相关底层知识">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/spring.png">
+<meta property="article:published_time" content="2023-03-26T11:38:22.000Z">
+<meta property="article:modified_time" content="2023-03-27T08:51:04.049Z">
+<meta property="article:author" content="程序员小魏">
+<meta property="article:tag" content="开发框架">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/img/spring.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Spring容器与bean - 程序员小魏的后端之旅</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_3846514_kabxni94auf.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/bynotes/texiao/source/css/shubiao.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/bynotes/texiao/source/css/gundongtiao.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":true,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>程序员小魏的后端之旅</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives">
+                <i class="iconfont icon-books"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories">
+                <i class="iconfont icon-th-large"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-book"></i>
+                <span>文档</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/">
+                    
+                    <span>主题博客</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/guide/">
+                    
+                    <span>配置指南</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/icon/">
+                    
+                    <span>图标用法</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Spring容器与bean"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        程序员小魏
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-03-26 19:38" pubdate>
+           2023 年 03 月 26 日 , 晚上 07:38 , 星期日
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          19k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          157 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Spring容器与bean</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="容器接口"><a href="#容器接口" class="headerlink" title="容器接口"></a>容器接口</h2><ul>
+<li><p>BeanFactory 接口，典型功能有：</p>
+</li>
+<li><ul>
+<li>getBean</li>
+</ul>
+</li>
+<li><p>ApplicationContext 接口，是 BeanFactory 的子接口。它扩展了 BeanFactory 接口的功能，如：</p>
+</li>
+<li><ul>
+<li>国际化</li>
+<li>通配符方式获取一组 Resource 资源</li>
+<li>整合 Environment 环境（能通过它获取各种来源的配置信息）</li>
+<li>事件发布与监听，实现组件之间的解耦</li>
+</ul>
+</li>
+</ul>
+<h3 id="BeanFactory与Application的区别"><a href="#BeanFactory与Application的区别" class="headerlink" title="BeanFactory与Application的区别"></a>BeanFactory与Application的区别</h3><ol>
+<li>到底什么是 BeanFactory</li>
+</ol>
+<ul>
+<li><ul>
+<li>它是 ApplicationContext 的父接口</li>
+<li>它才是 Spring 的核心容器, 主要的 ApplicationContext 实现都【组合】了它的功能，【组合】是指 ApplicationContext 的一个重要成员变量就是 BeanFactory</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>BeanFactory 能干点啥</li>
+</ol>
+<ul>
+<li><ul>
+<li>表面上只有 getBean</li>
+<li>实际上控制反转、基本的依赖注入、直至 Bean 的生命周期的各种功能，都由它的实现类提供</li>
+<li>通过反射查看了它的成员变量 singletonObjects，内部包含了所有的单例 bean</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>ApplicationContext 比 BeanFactory 多点啥</li>
+</ol>
+<ul>
+<li><ul>
+<li>ApplicationContext 组合并扩展了 BeanFactory 的功能</li>
+<li>国际化、通配符方式获取一组 Resource 资源、整合 Environment 环境、事件发布与监听</li>
+</ul>
+</li>
+</ul>
+<h2 id="容器实现"><a href="#容器实现" class="headerlink" title="容器实现"></a>容器实现</h2><p>具体实现类：</p>
+<ul>
+<li>DefaultListableBeanFactory，是 BeanFactory 最重要的实现，像<strong>控制反转</strong>和<strong>依赖注入</strong>功能，都是它来实现</li>
+<li>ClassPathXmlApplicationContext，从类路径查找 XML 配置文件，创建容器（旧）</li>
+<li>FileSystemXmlApplicationContext，从磁盘路径查找 XML 配置文件，创建容器（旧）</li>
+<li>XmlWebApplicationContext，传统 SSM 整合时，基于 XML 配置文件的容器（旧）</li>
+<li>AnnotationConfigWebApplicationContext，传统 SSM 整合时，基于 java 配置类的容器（旧）</li>
+<li>AnnotationConfigApplicationContext，Spring boot 中非 web 环境容器（新）</li>
+<li>AnnotationConfigServletWebServerApplicationContext，Spring boot 中 servlet web 环境容器（新）</li>
+<li>AnnotationConfigReactiveWebServerApplicationContext，Spring boot 中 reactive web 环境容器*（新）</li>
+</ul>
+<p>带有 ApplicationContext 的类都是 ApplicationContext 接口的实现，但它们是<strong>组合</strong>了 DefaultListableBeanFactory 的功能，并非继承而来。</p>
+<h3 id="DefaultListableBeanFactory"><a href="#DefaultListableBeanFactory" class="headerlink" title="DefaultListableBeanFactory"></a>DefaultListableBeanFactory</h3><ul>
+<li><p>beanFactory 可以<strong>通过 registerBeanDefinition 注册一个 bean definition 对象</strong> </p>
+</li>
+<li><ul>
+<li>我们平时使用的配置类、xml、组件扫描等方式都是生成 bean definition 对象注册到 beanFactory 当中</li>
+<li><strong>bean definition 描述了这个 bean 的创建蓝图：scope 是什么、用构造还是工厂创建、初始化销毁方法是什么，等等</strong></li>
+</ul>
+</li>
+<li><p><strong>beanFactory 需要手动调用 beanFactory 后处理器对它做增强</strong> </p>
+</li>
+<li><ul>
+<li><strong>例如通过解析 @Bean、@ComponentScan  等注解，来补充一些 bean definition</strong></li>
+</ul>
+</li>
+<li><p><strong>beanFactory 需要手动添加 bean 后处理器，以便对后续 bean 的创建过程提供增强</strong> </p>
+</li>
+<li><ul>
+<li><strong>例如 @Autowired，@Resource  等注解的解析都是 bean 后处理器完成的</strong> </li>
+<li>bean 后处理的添加顺序会对解析结果有影响</li>
+</ul>
+</li>
+<li><p>beanFactory 需要手动调用方法来初始化单例</p>
+</li>
+<li><p>beanFactory 需要额外设置才能解析 ${} 与 #{}</p>
+</li>
+</ul>
+<h3 id="ApplicationContext实现类"><a href="#ApplicationContext实现类" class="headerlink" title="ApplicationContext实现类"></a>ApplicationContext实现类</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><code class="hljs java"> <span class="hljs-comment">// ⬇️较为经典的容器, 基于 classpath 下 xml 格式的配置文件来创建</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testClassPathXmlApplicationContext</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-type">ClassPathXmlApplicationContext</span> <span class="hljs-variable">context</span> <span class="hljs-operator">=</span><br>                <span class="hljs-keyword">new</span> <span class="hljs-title class_">ClassPathXmlApplicationContext</span>(<span class="hljs-string">&quot;a02.xml&quot;</span>);<br><br>        <span class="hljs-keyword">for</span> (String name : context.getBeanDefinitionNames()) &#123;<br>            System.out.println(name);<br>        &#125;<br><br>        System.out.println(context.getBean(Bean2.class).getBean1());<br>    &#125;<br><br>    <span class="hljs-comment">// ⬇️基于磁盘路径下 xml 格式的配置文件来创建</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testFileSystemXmlApplicationContext</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-type">FileSystemXmlApplicationContext</span> <span class="hljs-variable">context</span> <span class="hljs-operator">=</span><br>                <span class="hljs-keyword">new</span> <span class="hljs-title class_">FileSystemXmlApplicationContext</span>(<br>                        <span class="hljs-string">&quot;src\\main\\resources\\a02.xml&quot;</span>);<br>        <span class="hljs-keyword">for</span> (String name : context.getBeanDefinitionNames()) &#123;<br>            System.out.println(name);<br>        &#125;<br><br>        System.out.println(context.getBean(Bean2.class).getBean1());<br>    &#125;<br><br>    <span class="hljs-comment">// ⬇️较为经典的容器, 基于 java 配置类来创建</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testAnnotationConfigApplicationContext</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-type">AnnotationConfigApplicationContext</span> <span class="hljs-variable">context</span> <span class="hljs-operator">=</span><br>                <span class="hljs-keyword">new</span> <span class="hljs-title class_">AnnotationConfigApplicationContext</span>(Config.class);<br><br>        <span class="hljs-keyword">for</span> (String name : context.getBeanDefinitionNames()) &#123;<br>            System.out.println(name);<br>        &#125;<br><br>        System.out.println(context.getBean(Bean2.class).getBean1());<br>    &#125;<br><br>    <span class="hljs-comment">// ⬇️较为经典的容器, 基于 java 配置类来创建, 用于 web 环境</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">testAnnotationConfigServletWebServerApplicationContext</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-type">AnnotationConfigServletWebServerApplicationContext</span> <span class="hljs-variable">context</span> <span class="hljs-operator">=</span><br>                <span class="hljs-keyword">new</span> <span class="hljs-title class_">AnnotationConfigServletWebServerApplicationContext</span>(WebConfig.class);<br>        <span class="hljs-keyword">for</span> (String name : context.getBeanDefinitionNames()) &#123;<br>            System.out.println(name);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-meta">@Configuration</span><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">WebConfig</span> &#123;<br>        <span class="hljs-meta">@Bean</span><br>        <span class="hljs-keyword">public</span> ServletWebServerFactory <span class="hljs-title function_">servletWebServerFactory</span><span class="hljs-params">()</span>&#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">TomcatServletWebServerFactory</span>();<br>        &#125;<br>        <span class="hljs-meta">@Bean</span><br>        <span class="hljs-keyword">public</span> DispatcherServlet <span class="hljs-title function_">dispatcherServlet</span><span class="hljs-params">()</span> &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">DispatcherServlet</span>();<br>        &#125;<br>        <span class="hljs-meta">@Bean</span><br>        <span class="hljs-keyword">public</span> DispatcherServletRegistrationBean <span class="hljs-title function_">registrationBean</span><span class="hljs-params">(DispatcherServlet dispatcherServlet)</span> &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">DispatcherServletRegistrationBean</span>(dispatcherServlet, <span class="hljs-string">&quot;/&quot;</span>);<br>        &#125;<br>        <span class="hljs-meta">@Bean(&quot;/hello&quot;)</span><br>        <span class="hljs-keyword">public</span> Controller <span class="hljs-title function_">controller1</span><span class="hljs-params">()</span> &#123;<br>            <span class="hljs-keyword">return</span> (request, response) -&gt; &#123;<br>                response.getWriter().print(<span class="hljs-string">&quot;hello&quot;</span>);<br>                <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;<br>            &#125;;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-meta">@Configuration</span><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Config</span> &#123;<br>        <span class="hljs-meta">@Bean</span><br>        <span class="hljs-keyword">public</span> Bean1 <span class="hljs-title function_">bean1</span><span class="hljs-params">()</span> &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Bean1</span>();<br>        &#125;<br><br>        <span class="hljs-meta">@Bean</span><br>        <span class="hljs-keyword">public</span> Bean2 <span class="hljs-title function_">bean2</span><span class="hljs-params">(Bean1 bean1)</span> &#123;<br>            <span class="hljs-type">Bean2</span> <span class="hljs-variable">bean2</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Bean2</span>();<br>            bean2.setBean1(bean1);<br>            <span class="hljs-keyword">return</span> bean2;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Bean1</span> &#123;<br>    &#125;<br><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Bean2</span> &#123;<br><br>        <span class="hljs-keyword">private</span> Bean1 bean1;<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">setBean1</span><span class="hljs-params">(Bean1 bean1)</span> &#123;<br>            <span class="hljs-built_in">this</span>.bean1 = bean1;<br>        &#125;<br><br>        <span class="hljs-keyword">public</span> Bean1 <span class="hljs-title function_">getBean1</span><span class="hljs-params">()</span> &#123;<br>            <span class="hljs-keyword">return</span> bean1;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h2 id="Bean-的生命周期"><a href="#Bean-的生命周期" class="headerlink" title="Bean 的生命周期"></a>Bean 的生命周期</h2><p>一个受 Spring 管理的 bean，生命周期主要阶段有</p>
+<ol>
+<li>创建：根据 bean 的构造方法或者工厂方法来创建 bean 实例对象</li>
+<li>依赖注入：根据 @Autowired，@Value  或其它一些手段，为 bean 的成员变量填充值、建立关系 </li>
+<li>初始化：回调各种 Aware 接口，调用对象的各种初始化方法</li>
+<li>销毁：在容器关闭时，会销毁所有单例对象（即调用它们的销毁方法）</li>
+</ol>
+<ul>
+<li><ul>
+<li>prototype 对象也能够销毁，不过需要容器这边主动调用</li>
+</ul>
+</li>
+</ul>
+<p>生命周期中还有一类 bean 后置处理器，会在上述生命周期的前后，提供一些扩展逻辑。</p>
+<h3 id="bean后置处理器"><a href="#bean后置处理器" class="headerlink" title="bean后置处理器"></a>bean后置处理器</h3><p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679830784303.png" srcset="/img/loading.gif" lazyload></p>
+<p>注意：以下都是方法</p>
+<p>创建前后的增强</p>
+<ul>
+<li><p>postProcessBeforeInstantiation （Instantiation：实例化）</p>
+</li>
+<li><ul>
+<li>这里返回的对象若不为 null 会替换掉原本的 bean，并且仅会走 postProcessAfterInitialization 流程</li>
+</ul>
+</li>
+<li><p>postProcessAfterInstantiation </p>
+</li>
+<li><ul>
+<li>这里如果返回 false 会跳过依赖注入阶段</li>
+</ul>
+</li>
+</ul>
+<p>依赖注入前的增强</p>
+<ul>
+<li><p>postProcessProperties </p>
+</li>
+<li><ul>
+<li>如 @Autowired、@Value、@Resource</li>
+</ul>
+</li>
+</ul>
+<p>初始化前后的增强</p>
+<ul>
+<li><p>postProcessBeforeInitialization （Initialization：初始化）</p>
+</li>
+<li><ul>
+<li>这里返回的对象会替换掉原本的 bean</li>
+<li>如 @PostConstruct、@ConfigurationProperties</li>
+</ul>
+</li>
+<li><p>postProcessAfterInitialization </p>
+</li>
+<li><ul>
+<li>这里返回的对象会替换掉原本的 bean</li>
+<li>如代理增强</li>
+</ul>
+</li>
+</ul>
+<p>销毁之前的增强</p>
+<ul>
+<li><p>postProcessBeforeDestruction </p>
+</li>
+<li><ul>
+<li>如 @PreDestroy</li>
+</ul>
+</li>
+</ul>
+<h3 id="模板方法模式"><a href="#模板方法模式" class="headerlink" title="模板方法模式"></a>模板方法模式</h3><p>Bean的生命周期中通过bean的后置处理器作扩展，使用的是模板方法模式</p>
+<p>代码演示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">TestMethodTemplate</span> &#123;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-type">MyBeanFactory</span> <span class="hljs-variable">beanFactory</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">MyBeanFactory</span>();<br>        <span class="hljs-comment">//定义不同的子类</span><br>        beanFactory.addBeanPostProcessor(bean -&gt; System.out.println(<span class="hljs-string">&quot;解析 @Autowired&quot;</span>));<br>        beanFactory.addBeanPostProcessor(bean -&gt; System.out.println(<span class="hljs-string">&quot;解析 @Resource&quot;</span>));<br>        beanFactory.getBean();<br>    &#125;<br><br>    <span class="hljs-comment">// 模板方法  Template Method Pattern</span><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">MyBeanFactory</span> &#123;<br>        <span class="hljs-keyword">public</span> Object <span class="hljs-title function_">getBean</span><span class="hljs-params">()</span> &#123;<br>            <span class="hljs-type">Object</span> <span class="hljs-variable">bean</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Object</span>();<br>            System.out.println(<span class="hljs-string">&quot;构造 &quot;</span> + bean);<br>            System.out.println(<span class="hljs-string">&quot;依赖注入 &quot;</span> + bean); <span class="hljs-comment">// @Autowired, @Resource</span><br>            <span class="hljs-keyword">for</span> (BeanPostProcessor processor : processors) &#123;<br>                processor.inject(bean);<br>            &#125;<br>            System.out.println(<span class="hljs-string">&quot;初始化 &quot;</span> + bean);<br>            <span class="hljs-keyword">return</span> bean;<br>        &#125;<br><br>        <span class="hljs-keyword">private</span> List&lt;BeanPostProcessor&gt; processors = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;();<br><br>        <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">addBeanPostProcessor</span><span class="hljs-params">(BeanPostProcessor processor)</span> &#123;<br>            processors.add(processor);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">BeanPostProcessor</span> &#123;<br>        <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">inject</span><span class="hljs-params">(Object bean)</span>; <span class="hljs-comment">// 对依赖注入阶段的扩展</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="bean-后处理器排序"><a href="#bean-后处理器排序" class="headerlink" title="bean 后处理器排序"></a>bean 后处理器排序</h3><p>对于各种后处理器的执行顺序，有这样的规则：</p>
+<ol>
+<li>实现了 PriorityOrdered 接口的优先级最高</li>
+<li>实现了 Ordered 接口与加了 @Order  注解的平级, 按数字升序 </li>
+<li>其它的排在最后</li>
+</ol>
+<p>代码演示：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/*</span><br><span class="hljs-comment">    bean 后处理的的排序</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">TestProcessOrder</span> &#123;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-type">DefaultListableBeanFactory</span> <span class="hljs-variable">beanFactory</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">DefaultListableBeanFactory</span>();<br>        AnnotationConfigUtils.registerAnnotationConfigProcessors(beanFactory);<br><br>        List&lt;BeanPostProcessor&gt; list = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;(List.of(<span class="hljs-keyword">new</span> <span class="hljs-title class_">P1</span>(), <span class="hljs-keyword">new</span> <span class="hljs-title class_">P2</span>(), <span class="hljs-keyword">new</span> <span class="hljs-title class_">P3</span>(), <span class="hljs-keyword">new</span> <span class="hljs-title class_">P4</span>(), <span class="hljs-keyword">new</span> <span class="hljs-title class_">P5</span>()));<br>        list.sort(beanFactory.getDependencyComparator());<br><br>        list.forEach(processor-&gt;&#123;<br>            processor.postProcessBeforeInitialization(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Object</span>(), <span class="hljs-string">&quot;&quot;</span>);<br>        &#125;);<br><br>        <span class="hljs-comment">/*</span><br><span class="hljs-comment">            学到了什么</span><br><span class="hljs-comment">                1. 实现了 PriorityOrdered 接口的优先级最高</span><br><span class="hljs-comment">                2. 实现了 Ordered 接口与加了 @Order 注解的平级, 按数字升序</span><br><span class="hljs-comment">                3. 其它的排在最后</span><br><span class="hljs-comment">         */</span><br>    &#125;<br><br>    <span class="hljs-meta">@Order(1)</span><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">P1</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">BeanPostProcessor</span> &#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">log</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(P1.class);<br><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-keyword">public</span> Object <span class="hljs-title function_">postProcessBeforeInitialization</span><span class="hljs-params">(Object bean, String beanName)</span> <span class="hljs-keyword">throws</span> BeansException &#123;<br>            log.debug(<span class="hljs-string">&quot;postProcessBeforeInitialization @Order(1)&quot;</span>);<br>            <span class="hljs-keyword">return</span> bean;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-meta">@Order(2)</span><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">P2</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">BeanPostProcessor</span> &#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">log</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(P2.class);<br><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-keyword">public</span> Object <span class="hljs-title function_">postProcessBeforeInitialization</span><span class="hljs-params">(Object bean, String beanName)</span> <span class="hljs-keyword">throws</span> BeansException &#123;<br>            log.debug(<span class="hljs-string">&quot;postProcessBeforeInitialization @Order(2)&quot;</span>);<br>            <span class="hljs-keyword">return</span> bean;<br>        &#125;<br><br>    &#125;<br><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">P3</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">BeanPostProcessor</span>, PriorityOrdered &#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">log</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(P3.class);<br><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-keyword">public</span> Object <span class="hljs-title function_">postProcessBeforeInitialization</span><span class="hljs-params">(Object bean, String beanName)</span> <span class="hljs-keyword">throws</span> BeansException &#123;<br>            log.debug(<span class="hljs-string">&quot;postProcessBeforeInitialization PriorityOrdered&quot;</span>);<br>            <span class="hljs-keyword">return</span> bean;<br>        &#125;<br><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-keyword">public</span> <span class="hljs-type">int</span> <span class="hljs-title function_">getOrder</span><span class="hljs-params">()</span> &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-number">100</span>;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">P4</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">BeanPostProcessor</span>, Ordered &#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">log</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(P4.class);<br><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-keyword">public</span> Object <span class="hljs-title function_">postProcessBeforeInitialization</span><span class="hljs-params">(Object bean, String beanName)</span> <span class="hljs-keyword">throws</span> BeansException &#123;<br>            log.debug(<span class="hljs-string">&quot;postProcessBeforeInitialization Ordered&quot;</span>);<br>            <span class="hljs-keyword">return</span> bean;<br>        &#125;<br><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-keyword">public</span> <span class="hljs-type">int</span> <span class="hljs-title function_">getOrder</span><span class="hljs-params">()</span> &#123;<br>            <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">P5</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">BeanPostProcessor</span> &#123;<br>        <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">log</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(P5.class);<br><br>        <span class="hljs-meta">@Override</span><br>        <span class="hljs-keyword">public</span> Object <span class="hljs-title function_">postProcessBeforeInitialization</span><span class="hljs-params">(Object bean, String beanName)</span> <span class="hljs-keyword">throws</span> BeansException &#123;<br>            log.debug(<span class="hljs-string">&quot;postProcessBeforeInitialization&quot;</span>);<br>            <span class="hljs-keyword">return</span> bean;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>控制台输出样例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java">[DEBUG] <span class="hljs-number">22</span>:<span class="hljs-number">13</span>:<span class="hljs-number">30.104</span> [main] com.itheima.a03.TestProcessOrder$P3 - postProcessBeforeInitialization PriorityOrdered <br>[DEBUG] <span class="hljs-number">22</span>:<span class="hljs-number">13</span>:<span class="hljs-number">30.108</span> [main] com.itheima.a03.TestProcessOrder$P4 - postProcessBeforeInitialization Ordered <br>[DEBUG] <span class="hljs-number">22</span>:<span class="hljs-number">13</span>:<span class="hljs-number">30.108</span> [main] com.itheima.a03.TestProcessOrder$P1 - postProcessBeforeInitialization <span class="hljs-meta">@Order(1)</span> <br>[DEBUG] <span class="hljs-number">22</span>:<span class="hljs-number">13</span>:<span class="hljs-number">30.108</span> [main] com.itheima.a03.TestProcessOrder$P2 - postProcessBeforeInitialization <span class="hljs-meta">@Order(2)</span> <br>[DEBUG] <span class="hljs-number">22</span>:<span class="hljs-number">13</span>:<span class="hljs-number">30.108</span> [main] com.itheima.a03.TestProcessOrder$P5 - postProcessBeforeInitialization <br></code></pre></td></tr></table></figure>
+
+<h2 id="Bean-后处理器"><a href="#Bean-后处理器" class="headerlink" title="Bean 后处理器"></a>Bean 后处理器</h2><h3 id="后处理器作用"><a href="#后处理器作用" class="headerlink" title="后处理器作用"></a>后处理器作用</h3><ol>
+<li>@Autowired  等注解的解析属于 bean 生命周期阶段（依赖注入, 初始化）的扩展功能，这些扩展功能由 bean 后处理器来完成 </li>
+<li>每个后处理器各自增强什么功能</li>
+</ol>
+<ul>
+<li><ul>
+<li>AutowiredAnnotationBeanPostProcessor 解析 @Autowired  与 @Value  </li>
+<li>CommonAnnotationBeanPostProcessor 解析 @Resource、@PostConstruct、@PreDestroy  </li>
+<li>ConfigurationPropertiesBindingPostProcessor 解析 @ConfigurationProperties</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>另外 ContextAnnotationAutowireCandidateResolver 负责获取 @Value  的值，解析 @Qualifier、泛型、@Lazy  等</li>
+</ol>
+<h4 id="Autowired-bean-后处理器运行分析"><a href="#Autowired-bean-后处理器运行分析" class="headerlink" title="@Autowired bean 后处理器运行分析"></a>@Autowired bean 后处理器运行分析</h4><ol>
+<li>AutowiredAnnotationBeanPostProcessor.findAutowiringMetadata 用来获取某个 bean 上加了 @Value  @Autowired  的成员变量，方法参数的信息，表示为 InjectionMetadata </li>
+<li>InjectionMetadata 可以完成依赖注入</li>
+<li>InjectionMetadata 内部根据成员变量，方法参数封装为 DependencyDescriptor 类型</li>
+<li>有了 DependencyDescriptor，就可以利用 beanFactory.doResolveDependency 方法进行基于类型的查找</li>
+</ol>
+<h2 id="BeanFactory-后处理器"><a href="#BeanFactory-后处理器" class="headerlink" title="BeanFactory 后处理器"></a>BeanFactory 后处理器</h2><h3 id="BeanFactory-后处理器的作用"><a href="#BeanFactory-后处理器的作用" class="headerlink" title="BeanFactory 后处理器的作用"></a>BeanFactory 后处理器的作用</h3><ul>
+<li><p>ConfigurationClassPostProcessor 可以解析 </p>
+</li>
+<li><ul>
+<li>@ComponentScan  </li>
+<li>@Bean  </li>
+<li>@Import  </li>
+<li>@ImportResource</li>
+</ul>
+</li>
+<li><p>MapperScannerConfigurer 可以解析 </p>
+</li>
+<li><ul>
+<li>Mapper 接口</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>@ComponentScan, @Bean, @Mapper  等注解的解析属于核心容器（即 BeanFactory）的扩展功能 </li>
+<li>这些扩展功能由不同的 BeanFactory 后处理器来完成，其实主要就是补充了一些 bean 定义</li>
+</ol>
+<h3 id="ComponentScan底层实现过程"><a href="#ComponentScan底层实现过程" class="headerlink" title="@ComponentScan底层实现过程"></a>@ComponentScan底层实现过程</h3><ol>
+<li><strong>扫描指定包路径下的类文件</strong>。在启动Spring应用程序时，会通过ClassLoader加载应用程序的类，并扫描指定包路径下的所有类文件。Spring框架会使用ClassPathBeanDefinitionScanner类来扫描类路径，并使用ClassPathResource类来表示类路径中的资源文件。</li>
+<li><strong>解析类文件中的注解信息</strong>。扫描完类文件之后，Spring框架会解析类文件中的注解信息，包括@Component、@Service、@Repository等等。根据注解的不同，生成相应的Bean定义对象。</li>
+<li><strong>注册Bean<strong><strong>Definition</strong></strong>对象</strong>。生成BeanDefinition对象之后，Spring框架会将它们注册到Bean工厂中，从而使它们成为可用的Bean对象。在这个过程中，Spring框架会使用BeanDefinitionRegistry接口来注册BeanDefinition对象，并使用BeanDefinitionReaderUtils类来加载Bean定义信息。</li>
+<li><strong>初始化Bean对象</strong>。当Spring框架完成Bean定义的注册之后，会自动初始化所有的Bean对象。在这个过程中，Spring框架会自动处理Bean之间的依赖关系，通过自动装配来实现依赖注入。此外，还会调用所有的@PostConstruct方法来完成Bean的初始化工作。</li>
+</ol>
+<h3 id="Bean底层实现过程"><a href="#Bean底层实现过程" class="headerlink" title="@Bean底层实现过程"></a>@Bean底层实现过程</h3><p>@Bean注解是Spring框架中的一个核心注解，它用于声明一个Bean对象，并将这个对象纳入Spring容器的管理范畴。底层的具体实现过程包括以下几个步骤：</p>
+<ol>
+<li><strong>扫描@Configuration注解。</strong>当Spring容器启动时，它会扫描所有的@Configuration注解，这些注解通常用于指定配置类，也就是包含@Bean注解的类。</li>
+<li><strong>解析@Bean注解。</strong>在扫描到@Configuration注解后，Spring容器会解析其中的@Bean注解，检查注解中是否指定了Bean的名称。如果没有指定名称，Spring容器会使用方法名作为Bean的名称。</li>
+<li><strong>执行@Bean注解的方法。</strong>在解析@Bean注解后，Spring容器会执行其中的方法，并将方法返回的对象作为Bean对象注册到容器中。<strong>如果方法有参数，Spring容器会尝试自动装配这些参数，如果无法自动装配，则会抛出异常。如果有多个Bean对象匹配到了同一个参数类型，则会抛出异常。</strong></li>
+<li><strong>处理Bean对象。</strong>在执行完所有的@Bean注解的方法后，Spring容器会处理这些Bean对象，包括初始化、依赖注入等操作。具体的处理过程取决于Bean对象的作用域、生命周期等属性。</li>
+<li><strong>注册Bean对象。</strong>在处理完所有的Bean对象后，Spring容器会将它们注册到容器中，并且为每个Bean对象分配一个唯一的ID，这个ID通常是一个字符串。我们可以使用这个ID来获取Bean对象，或者使用@Autowired注解来注入Bean对象。</li>
+</ol>
+<h3 id="Mapper-接口在Spring框架中的底层实现"><a href="#Mapper-接口在Spring框架中的底层实现" class="headerlink" title="Mapper 接口在Spring框架中的底层实现"></a>Mapper 接口在Spring框架中的底层实现</h3><p>在Spring框架中，MyBatis的Mapper接口底层实现主要通过动态代理实现。</p>
+<p>MyBatis的Mapper接口主要是定义了数据访问的方法，通过Spring框架和MyBatis框架的结合，我们可以通过Mapper接口的定义，使用Spring提供的动态代理机制来自动生成Mapper接口的实现类。</p>
+<p>具体实现过程如下：</p>
+<ol>
+<li>在Spring配置文件中，需要配置MapperScannerConfigurer来扫描Mapper接口。</li>
+</ol>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs xml"><span class="hljs-tag">&lt;<span class="hljs-name">bean</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;org.mybatis.spring.mapper.MapperScannerConfigurer&quot;</span>&gt;</span><br>  <span class="hljs-tag">&lt;<span class="hljs-name">property</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;basePackage&quot;</span> <span class="hljs-attr">value</span>=<span class="hljs-string">&quot;com.example.mapper&quot;</span>/&gt;</span><br><span class="hljs-tag">&lt;/<span class="hljs-name">bean</span>&gt;</span><br></code></pre></td></tr></table></figure>
+
+<ol>
+<li>MapperScannerConfigurer(<strong>这是一个BeanFactory的后置处理器</strong>）会扫描指定包下的Mapper接口，然后将这些接口交给SqlSessionFactoryBean（<strong>这个类实现了FactoryBean接口，getObject方法中返回了SqlSessionFactoryBean</strong>）管理，通过动态代理生成实现类。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">MapperScannerConfigurer</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">BeanDefinitionRegistryPostProcessor</span>, InitializingBean &#123;<br><br>    <span class="hljs-keyword">private</span> SqlSessionFactoryBean sqlSessionFactoryBean;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">postProcessBeanDefinitionRegistry</span><span class="hljs-params">(BeanDefinitionRegistry registry)</span> <span class="hljs-keyword">throws</span> BeansException &#123;<br>        <span class="hljs-comment">// 获取指定包下的所有Mapper接口，并将MapperFactoryBean注册为BeanDefinition</span><br>        <span class="hljs-keyword">for</span> (Class&lt;?&gt; mapperClass : <span class="hljs-built_in">this</span>.mapperScanner.scan()) &#123;<br>            <span class="hljs-type">RootBeanDefinition</span> <span class="hljs-variable">beanDefinition</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">RootBeanDefinition</span>(MapperFactoryBean.class);<br>            beanDefinition.getPropertyValues().add(<span class="hljs-string">&quot;mapperInterface&quot;</span>, mapperClass);<br>            beanDefinition.getPropertyValues().add(<span class="hljs-string">&quot;sqlSessionFactory&quot;</span>, <span class="hljs-built_in">this</span>.sqlSessionFactoryBean.getObject());<br>            registry.registerBeanDefinition(mapperClass.getName(), beanDefinition);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">afterPropertiesSet</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        Assert.notNull(<span class="hljs-built_in">this</span>.sqlSessionFactoryBean, <span class="hljs-string">&quot;Property &#x27;sqlSessionFactory&#x27; is required&quot;</span>);<br>        Assert.notNull(<span class="hljs-built_in">this</span>.mapperScanner, <span class="hljs-string">&quot;Property &#x27;mapperScanner&#x27; is required&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-comment">// Setter for sqlSessionFactoryBean</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">setSqlSessionFactoryBean</span><span class="hljs-params">(SqlSessionFactoryBean sqlSessionFactoryBean)</span> &#123;<br>        <span class="hljs-built_in">this</span>.sqlSessionFactoryBean = sqlSessionFactoryBean;<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ol>
+<li>MapperFactoryBean是Mapper接口的工厂类，负责生成Mapper接口的实例。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">MapperFactoryBean</span>&lt;T&gt; <span class="hljs-keyword">implements</span> <span class="hljs-title class_">FactoryBean</span>&lt;T&gt; &#123;<br><br>    <span class="hljs-keyword">private</span> Class&lt;T&gt; mapperInterface;<br><br>    <span class="hljs-keyword">private</span> SqlSession sqlSession;<br><br>    <span class="hljs-keyword">public</span> T <span class="hljs-title function_">getObject</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        <span class="hljs-comment">//返回具体Mapper接口的代理实现类对象，注册到IoC容器中</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.sqlSession.getMapper(<span class="hljs-built_in">this</span>.mapperInterface);<br>    &#125;<br><br>    <span class="hljs-keyword">public</span> Class&lt;T&gt; <span class="hljs-title function_">getObjectType</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.mapperInterface;<br>    &#125;<br><br>    <span class="hljs-comment">// Setter for sqlSession</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">setSqlSession</span><span class="hljs-params">(SqlSession sqlSession)</span> &#123;<br>        <span class="hljs-built_in">this</span>.sqlSession = sqlSession;<br>    &#125;<br><br>    <span class="hljs-comment">// Setter for mapperInterface</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">setMapperInterface</span><span class="hljs-params">(Class&lt;T&gt; mapperInterface)</span> &#123;<br>        <span class="hljs-built_in">this</span>.mapperInterface = mapperInterface;<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ol>
+<li>最后，我们就可以在业务逻辑中，直接使用@Autowired注解注入Mapper接口的实例，然后调用接口中的方法，实现对数据的访问。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Service</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">UserServiceImpl</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">UserService</span> &#123;<br><br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> UserMapper userMapper;<br><br>    <span class="hljs-keyword">public</span> User <span class="hljs-title function_">getUserById</span><span class="hljs-params">(Long id)</span> &#123;<br>        <span class="hljs-keyword">return</span> userMapper.getUserById(id);<br>    &#125;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>以上就是Mapper接口在Spring框架中的底层实现过程。通过动态代理，我们可以轻松地实现Mapper接口的定义和使用，使得数据访问变得更加简单和方便。</p>
+<h2 id="Aware-接口和-InitializingBean-接口"><a href="#Aware-接口和-InitializingBean-接口" class="headerlink" title="Aware 接口和 InitializingBean 接口"></a>Aware 接口和 InitializingBean 接口</h2><ol>
+<li>Aware 接口提供了一种【内置】 的注入手段，例如</li>
+</ol>
+<ul>
+<li><ul>
+<li>BeanNameAware 注入 bean 的名字</li>
+<li>BeanFactoryAware 注入 BeanFactory 容器</li>
+<li>ApplicationContextAware 注入 ApplicationContext 容器</li>
+<li>EmbeddedValueResolverAware 注入 ${} 解析器</li>
+</ul>
+</li>
+</ul>
+<ol>
+<li>InitializingBean 接口提供了一种【内置】的初始化手段</li>
+<li>对比</li>
+</ol>
+<ul>
+<li><ul>
+<li>内置的注入和初始化不受扩展功能的影响，总会被执行</li>
+<li>而扩展功能受某些情况影响可能会失效</li>
+<li>因此 Spring 框架内部的类常用内置注入和初始化</li>
+</ul>
+</li>
+</ul>
+<h3 id="代码演示"><a href="#代码演示" class="headerlink" title="代码演示"></a>代码演示</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">MyBean</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">BeanNameAware</span>, ApplicationContextAware, InitializingBean &#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">log</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(MyBean.class);<br>    <span class="hljs-comment">//接口BeanNameAware重写的方法</span><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">setBeanName</span><span class="hljs-params">(String name)</span> &#123;<br>        log.debug(<span class="hljs-string">&quot;当前bean &quot;</span> + <span class="hljs-built_in">this</span> + <span class="hljs-string">&quot; 名字叫:&quot;</span> + name);<br>    &#125;<br>    <span class="hljs-comment">//接口ApplicationContextAware重写的方法</span><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">setApplicationContext</span><span class="hljs-params">(ApplicationContext applicationContext)</span> <span class="hljs-keyword">throws</span> BeansException &#123;<br>        log.debug(<span class="hljs-string">&quot;当前bean &quot;</span> + <span class="hljs-built_in">this</span> + <span class="hljs-string">&quot; 容器是:&quot;</span> + applicationContext);<br>    &#125;<br>    <span class="hljs-comment">//接口InitializingBean重写的方法</span><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">afterPropertiesSet</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> Exception &#123;<br>        log.debug(<span class="hljs-string">&quot;当前bean &quot;</span> + <span class="hljs-built_in">this</span> + <span class="hljs-string">&quot; 初始化&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">aaa</span><span class="hljs-params">(ApplicationContext applicationContext)</span> &#123;<br>        log.debug(<span class="hljs-string">&quot;当前bean &quot;</span> + <span class="hljs-built_in">this</span> + <span class="hljs-string">&quot; 使用@Autowired 容器是:&quot;</span> + applicationContext);<br>    &#125;<br><br>    <span class="hljs-meta">@PostConstruct</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">init</span><span class="hljs-params">()</span> &#123;<br>        log.debug(<span class="hljs-string">&quot;当前bean &quot;</span> + <span class="hljs-built_in">this</span> + <span class="hljs-string">&quot; 使用@PostConstruct 初始化&quot;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="配置类-Autowired-失效分析"><a href="#配置类-Autowired-失效分析" class="headerlink" title="配置类 @Autowired 失效分析"></a>配置类 @Autowired 失效分析</h3><p>Java 配置类不包含 BeanFactoryPostProcessor 的情况</p>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679830915779.png" srcset="/img/loading.gif" lazyload></p>
+<p>Java 配置类包含 BeanFactoryPostProcessor 的情况，因此要创建其中的 BeanFactoryPostProcessor 必须提前创建 Java 配置类，而此时的 BeanPostProcessor 还未准备好，导致 @Autowired 等注解失效</p>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679830981263.png" srcset="/img/loading.gif" lazyload></p>
+<p>对应代码</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Configuration</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">MyConfig1</span> &#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">log</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(MyConfig1.class);<br><br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">setApplicationContext</span><span class="hljs-params">(ApplicationContext applicationContext)</span> &#123;<br>        log.debug(<span class="hljs-string">&quot;注入 ApplicationContext&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@PostConstruct</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">init</span><span class="hljs-params">()</span> &#123;<br>        log.debug(<span class="hljs-string">&quot;初始化&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@Bean</span> <span class="hljs-comment">//  ⬅️ 注释或添加 beanFactory 后处理器对应上方两种情况</span><br>    <span class="hljs-keyword">public</span> BeanFactoryPostProcessor <span class="hljs-title function_">processor1</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> beanFactory -&gt; &#123;<br>            log.debug(<span class="hljs-string">&quot;执行 processor1&quot;</span>);<br>        &#125;;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>*<strong>注意*</strong></p>
+<p>解决方法：</p>
+<ul>
+<li>用内置依赖注入和初始化取代扩展依赖注入和初始化</li>
+</ul>
+<h2 id="Bean的初始化与销毁"><a href="#Bean的初始化与销毁" class="headerlink" title="Bean的初始化与销毁"></a>Bean的初始化与销毁</h2><p>Spring 提供了多种初始化手段，除了课堂上讲的 @PostConstruct，@Bean(initMethod)  之外，还可以实现 InitializingBean 接口来进行初始化，如果同一个 bean 用了以上手段声明了 3 个初始化方法，那么它们的执行顺序是 </p>
+<ol>
+<li>@PostConstruct  标注的初始化方法 </li>
+<li>InitializingBean 接口的初始化方法</li>
+<li>@Bean(initMethod)  指定的初始化方法</li>
+</ol>
+<p>与初始化类似，Spring 也提供了多种销毁手段，执行顺序为</p>
+<ol>
+<li>@PreDestroy  标注的销毁方法 </li>
+<li>DisposableBean 接口的销毁方法</li>
+<li>@Bean(destroyMethod)  指定的销毁方法</li>
+</ol>
+<h2 id="Scope"><a href="#Scope" class="headerlink" title="Scope"></a>Scope</h2><p>在当前版本的 Spring 和 Spring Boot 程序中，支持五种 Scope</p>
+<ul>
+<li>singleton，容器启动时创建（未设置延迟），容器关闭时销毁</li>
+<li>prototype，每次使用时创建，不会自动销毁，需要调用 DefaultListableBeanFactory.destroyBean(bean) 销毁</li>
+<li>request，每次请求用到此 bean 时创建，请求结束时销毁</li>
+<li>session，每个会话用到此 bean 时创建，会话结束时销毁</li>
+<li>application，web 容器用到此 bean 时创建，容器停止时销毁</li>
+</ul>
+<h3 id="singleton-注入其它-scope-失效"><a href="#singleton-注入其它-scope-失效" class="headerlink" title="singleton 注入其它 scope 失效"></a>singleton 注入其它 scope 失效</h3><p>但要注意，如果在 singleton 注入其它 scope 都会有问题，解决方法有</p>
+<ul>
+<li>@Lazy  </li>
+<li>@Scope(proxyMode  &#x3D; ScopedProxyMode.TARGET_CLASS) </li>
+<li>ObjectFactory 或者 Provider</li>
+<li>ApplicationContext.getBean</li>
+</ul>
+<h3 id="三种具体解决方法"><a href="#三种具体解决方法" class="headerlink" title="三种具体解决方法"></a>三种具体解决方法</h3><h4 id="Lazy"><a href="#Lazy" class="headerlink" title="@Lazy"></a>@Lazy</h4><p>关于@Lazy的介绍具体见这篇文章：<a target="_blank" rel="noopener" href="https://www.yuque.com/weiyikai/framework/lb8lnxo0watlztqt">https://www.yuque.com/weiyikai/framework/lb8lnxo0watlztqt</a></p>
+<p>实现原理：</p>
+<p>以单例注入多例为例</p>
+<p>有一个单例对象 E</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Component</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">E</span> &#123;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">log</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(E.class);<br><br>    <span class="hljs-keyword">private</span> F f;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">E</span><span class="hljs-params">()</span> &#123;<br>        log.info(<span class="hljs-string">&quot;E()&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">setF</span><span class="hljs-params">(F f)</span> &#123;<br>        <span class="hljs-built_in">this</span>.f = f;<br>        log.info(<span class="hljs-string">&quot;setF(F f) &#123;&#125;&quot;</span>, f.getClass());<br>    &#125;<br><br>    <span class="hljs-keyword">public</span> F <span class="hljs-title function_">getF</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> f;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>要注入的对象 F 期望是多例</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Component</span><br><span class="hljs-meta">@Scope(&quot;prototype&quot;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">F</span> &#123;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Logger</span> <span class="hljs-variable">log</span> <span class="hljs-operator">=</span> LoggerFactory.getLogger(F.class);<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">F</span><span class="hljs-params">()</span> &#123;<br>        log.info(<span class="hljs-string">&quot;F()&quot;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>测试</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-type">E</span> <span class="hljs-variable">e</span> <span class="hljs-operator">=</span> context.getBean(E.class);<br><span class="hljs-type">F</span> <span class="hljs-variable">f1</span> <span class="hljs-operator">=</span> e.getF();<br><span class="hljs-type">F</span> <span class="hljs-variable">f2</span> <span class="hljs-operator">=</span> e.getF();<br>System.out.println(f1);<br>System.out.println(f2);<br></code></pre></td></tr></table></figure>
+
+<p>输出</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs java">com.itheima.demo.cycle.F@6622fc65<br>com.itheima.demo.cycle.F@6622fc65<br></code></pre></td></tr></table></figure>
+
+<p>发现它们是同一个对象，而不是期望的多例对象</p>
+<p>对于单例对象来讲，依赖注入仅发生了一次，后续再没有用到多例的 F，因此 E 用的始终是第一次依赖注入的 F</p>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679831022450.png" srcset="/img/loading.gif" lazyload></p>
+<p>解决</p>
+<ul>
+<li>使用 @Lazy生成代理(就是说加上@Lazy注解，注入的对象便是代理对象) </li>
+<li>代理对象虽然还是同一个，但当每次<strong>使用代理对象的任意方法</strong>时，由代理创建新的 f 对象</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679831060844.png" srcset="/img/loading.gif" lazyload></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Component</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">E</span> &#123;<br><br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-meta">@Lazy</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">setF</span><span class="hljs-params">(F f)</span> &#123;<br>        <span class="hljs-built_in">this</span>.f = f;<br>        log.info(<span class="hljs-string">&quot;setF(F f) &#123;&#125;&quot;</span>, f.getClass());<br>    &#125;<br><br>    <span class="hljs-comment">// ...</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>*<strong>注意*</strong></p>
+<ul>
+<li>@Lazy也可以加在成员变量上，但加在 set 方法上的目的是可以观察输出，加在成员变量上就不行了</li>
+<li>@Autowired 加在 set 方法的目的类似</li>
+</ul>
+<p>输出</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java">E: setF(F f) <span class="hljs-keyword">class</span> <span class="hljs-title class_">com</span>.itheima.demo.cycle.F$$EnhancerBySpringCGLIB$$8b54f2bc<br>F: F()<br>com.itheima.demo.cycle.F@3a6f2de3<br>F: F()<br>com.itheima.demo.cycle.F@56303b57<br></code></pre></td></tr></table></figure>
+
+<p>从输出日志可以看到调用 setF 方法时，f 对象的类型是代理类型</p>
+<h4 id="ApplicationContext-getBean"><a href="#ApplicationContext-getBean" class="headerlink" title="ApplicationContext.getBean"></a>ApplicationContext.getBean</h4><p>在单例 Bean 中注入多例 Bean 时，通过在单例 Bean 中使用 ApplicationContext 的 getBean() 方法获取多例 Bean，而不是通过注入的方式，可以解决多例 Bean 变成单例 Bean 的问题。因为每次获取多例 Bean 都会创建一个新的实例，而不是复用之前创建的实例。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Service</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SingletonService</span> &#123;<br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> ApplicationContext context;<br><br>    <span class="hljs-keyword">public</span> PrototypeService <span class="hljs-title function_">getPrototypeService</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> context.getBean(PrototypeService.class);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="ObjectFactory-或者-Provider"><a href="#ObjectFactory-或者-Provider" class="headerlink" title="ObjectFactory 或者 Provider"></a>ObjectFactory 或者 Provider</h4><p>使用 ObjectFactory 或者 Provider 接口获取多例 Bean，同样可以避免多例 Bean 变成单例 Bean 的问题。因为 ObjectFactory 和 Provider 接口都是延迟加载多例 Bean，每次调用 get() 方法都会创建一个新的实例。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-meta">@Service</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SingletonService</span> &#123;<br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> ObjectFactory&lt;PrototypeService&gt; prototypeServiceObjectFactory;<br><br>    <span class="hljs-keyword">public</span> PrototypeService <span class="hljs-title function_">getPrototypeService</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> prototypeServiceObjectFactory.getObject();<br>    &#125;<br>&#125;<br><span class="hljs-meta">@Service</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SingletonService</span> &#123;<br>    <span class="hljs-meta">@Autowired</span><br>    <span class="hljs-keyword">private</span> Provider&lt;PrototypeService&gt; prototypeServiceProvider;<br><br>    <span class="hljs-keyword">public</span> PrototypeService <span class="hljs-title function_">getPrototypeService</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> prototypeServiceProvider.get();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/Spring/" class="category-chain-item">Spring</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%BC%80%E5%8F%91%E6%A1%86%E6%9E%B6/">#开发框架</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Spring容器与bean</div>
+      <div>http://example.com/2023/03/26/Spring容器与bean/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>程序员小魏</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年3月26日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/03/26/SpringAOP%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90/" title="SpringAOP原理解析">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">SpringAOP原理解析</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/03/26/%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E9%9B%86%E5%90%88%E7%B1%BB/" title="线程安全集合类">
+                        <span class="hidden-mobile">线程安全集合类</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"l6YWrDG6zdbBheC4FYWffssk-MdYXbMMI","appKey":"JGIpLOPqsRK2CsLhfjzvIEtc","path":"window.location.pathname","placeholder":"留言仅限讨论，禁止广告等行为","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://l6ywrdg6.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <div style="font-size: 0.85rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/love.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/xiaoxingxing.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/xiaoxuehua.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/caidai.js"></script>
+<script src="/js/star.js"></script>
+<script src="/js/renwu.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

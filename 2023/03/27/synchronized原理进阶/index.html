@@ -1,0 +1,998 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/tree.png">
+  <link rel="icon" href="/img/tree.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="程序员小魏">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="介绍synchronized原理进阶知识">
+<meta property="og:type" content="article">
+<meta property="og:title" content="synchronized原理进阶">
+<meta property="og:url" content="http://example.com/2023/03/27/synchronized%E5%8E%9F%E7%90%86%E8%BF%9B%E9%98%B6/index.html">
+<meta property="og:site_name" content="程序员小魏的后端之旅">
+<meta property="og:description" content="介绍synchronized原理进阶知识">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/JUC.png">
+<meta property="article:published_time" content="2023-03-27T05:54:47.000Z">
+<meta property="article:modified_time" content="2023-03-27T08:51:19.597Z">
+<meta property="article:author" content="程序员小魏">
+<meta property="article:tag" content="JUC">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/img/JUC.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>synchronized原理进阶 - 程序员小魏的后端之旅</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_3846514_kabxni94auf.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/bynotes/texiao/source/css/shubiao.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/bynotes/texiao/source/css/gundongtiao.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":true,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>程序员小魏的后端之旅</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives">
+                <i class="iconfont icon-books"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories">
+                <i class="iconfont icon-th-large"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-book"></i>
+                <span>文档</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/">
+                    
+                    <span>主题博客</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/guide/">
+                    
+                    <span>配置指南</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/icon/">
+                    
+                    <span>图标用法</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="synchronized原理进阶"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        程序员小魏
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-03-27 13:54" pubdate>
+           2023 年 03 月 27 日 , 下午 01:54 , 星期一
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          13k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          109 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">synchronized原理进阶</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="一、轻量级锁"><a href="#一、轻量级锁" class="headerlink" title="一、轻量级锁"></a>一、轻量级锁</h3><p><strong>轻量级锁的使用场景：</strong>如果一个对象虽然有多线程要加锁，但加锁的时间是错开的（也就是没有竞争），那么可以 使用轻量级锁来优化。</p>
+<p>轻量级锁对使用者是透明的，即语法仍然是 <code>synchronized</code></p>
+<p><strong>示例</strong></p>
+<p>假设有两个方法同步块，利用同一个对象加锁</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Object</span> <span class="hljs-variable">obj</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Object</span>();<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">method1</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-keyword">synchronized</span> (obj) &#123;<br>        <span class="hljs-comment">// 同步块 A</span><br>        method2();<br>    &#125;<br>&#125;<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">method2</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-keyword">synchronized</span> (obj) &#123;<br>        <span class="hljs-comment">// 同步块 B</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>图解加锁过程</strong></p>
+<ul>
+<li>1、创建锁记录(Lock Record)对象,每个线程的<strong>栈帧</strong>都会包含一个锁记录的结构，内部可以存储锁定对象的<code>Mark Word</code></li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679900570513.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>2、让锁记录中<code>Object reference</code>指向锁对象，并尝试用cas替换Object的Mark Word,将Mark Word的值存入锁记录</p>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679900617925.png" srcset="/img/loading.gif" lazyload></p>
+</li>
+</ul>
+<blockquote>
+<p>CAS（Compare and Swap）:JDK提供的非阻塞原子性操作，它通过硬件保证了比较——更新操作的原子性。</p>
+</blockquote>
+<ul>
+<li>3、如果<code>cas</code>(compare and swap)替换成功，对象头中存储了<code>锁记录地址和状态00</code>，表示由该线程给对象加锁</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679897001018.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>线程中的锁信息和锁对象中的Mark Word进行了互换</strong></p>
+<ul>
+<li><p>4、如果 cas 失败，有两种情况</p>
+<ul>
+<li><p>如果是其它线程已经持有了该 Object 的<strong>轻量级锁</strong>，这时表明有竞争，进入锁膨胀过程；</p>
+</li>
+<li><p>如果是自己执行了 synchronized 锁重入，那么再添加一条 Lock Record 作为重入的计数（如下图所示）。</p>
+<ul>
+<li><p>轻量级锁示例代码中t0执行<code>syn method1(obj)</code>，获得锁之后继续调用<code>syn method2(obj)</code>（多出来一个栈帧，见下图），两个加锁的<code>obj</code>是同一个对象，因此<code>CAS</code>失败</p>
+</li>
+<li><p>在图中的体现：对象头<code>lock record 地址 00</code>在调用<code>method1(obj)</code>改变了，指向的是第一个栈帧的锁记录，因此第二个栈帧会CAS失败</p>
+</li>
+<li><p><code>Lock Record</code>的null记录锁重入的计数，如上为1，再调用一次++</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679897118895.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>5、当退出 synchronized 代码块（解锁时）如果有取值为 null 的锁记录，表示有重入，这时重置锁记录，表示重入计数减一</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679897168328.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>6、当退出synchronized代码块(解锁时) 锁记录的值不为null,这时使用cas将Mark Word的值恢复给对象头</p>
+<ul>
+<li><p>成功，则解锁成功</p>
+</li>
+<li><p>失败，说明轻量级锁进行了<strong>锁膨胀</strong>或已经升级为重量级锁，进入重量级锁解锁流程</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="二、锁膨胀"><a href="#二、锁膨胀" class="headerlink" title="二、锁膨胀"></a>二、锁膨胀</h3><p>如果在尝试加轻量级锁的过程中，CAS 操作无法成功，这时一种情况就是有其它线程为此对象加上了轻量级锁（有竞争），这时需要进行<code>锁膨胀</code>，将轻量级锁变为重量级锁。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">static</span> <span class="hljs-type">Object</span> <span class="hljs-variable">obj</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Object</span>();<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">method1</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-keyword">synchronized</span> (obj) &#123;<br>        <span class="hljs-comment">// 同步块</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>1、当Thread-1进行轻量级加锁时，Thread-0 已经对该对象加了轻量级锁</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679897392855.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>2、这时 Thread-1 加轻量级锁失败，进入锁膨胀流程<ul>
+<li>即为 Object 对象申请 Monitor 锁，让 Object 指向重量级锁地址；</li>
+<li>然后自己进入 Monitor 的 <code>EntryList BLOCKED</code>。</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679897426505.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li><p>3、当 Thread-0 退出同步块解锁时，使用 cas 将 Mark Word 的值恢复给对象头，失败。这时会进入</p>
+<p><strong>重量级解锁流程</strong></p>
+<ul>
+<li>即按照 Monitor 地址找到 Monitor 对象</li>
+<li>设置 Owner 为 null</li>
+<li>唤醒 <code>EntryList</code> 中 BLOCKED 线程</li>
+</ul>
+</li>
+</ul>
+<h3 id="三、自旋优化"><a href="#三、自旋优化" class="headerlink" title="三、自旋优化"></a>三、自旋优化</h3><p>重量级锁竞争的时候，还可以使用自旋来进行优化，如果当前线程自旋成功（即这时候持锁线程已经退出了同步块，释放了锁），这时当前线程就可以避免阻塞。</p>
+<p><strong>自旋定义</strong></p>
+<p>是指当一个线程在获取锁的时候，如果锁已经被其它线程获取，那么该线程将循环等待，然后不断的判断锁是否能够被成功获取，直到获取到锁才会退出循环。</p>
+<h4 id="自旋重试成功的情况"><a href="#自旋重试成功的情况" class="headerlink" title="自旋重试成功的情况"></a>自旋重试成功的情况</h4><p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679897616634.png" srcset="/img/loading.gif" lazyload></p>
+<p><em>注意：自旋需要cpu资源，所以适合多核cpu</em></p>
+<h4 id="自旋重试失败的情况"><a href="#自旋重试失败的情况" class="headerlink" title="自旋重试失败的情况"></a>自旋重试失败的情况</h4><p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679897677085.png" srcset="/img/loading.gif" lazyload></p>
+<ul>
+<li>自旋会占用 CPU 时间，<strong>单核 CPU 自旋就是浪费</strong>，多核 CPU 自旋才能发挥优势。</li>
+<li>在 Java 6 之后自旋锁是自适应的，比如对象刚刚的一次自旋操作成功过，那么认为这次自旋成功的可能性会高，就多自旋几次；反之，就少自旋甚至不自旋，总之，比较智能。</li>
+<li><strong>Java 7 之后不能控制是否开启自旋功能</strong></li>
+</ul>
+<h4 id="对于自旋优化的理解"><a href="#对于自旋优化的理解" class="headerlink" title="对于自旋优化的理解"></a>对于自旋优化的理解</h4><ul>
+<li>在Java中，<strong>自旋优化和阻塞</strong>是两种不同的线程等待策略。</li>
+</ul>
+<p><strong>阻塞</strong>是指一个线程在等待某个操作完成时，会被挂起，直到操作完成才会被唤醒。这种等待方式会导致线程上下文的切换，从而降低程序的性能。</p>
+<p><strong>自旋优化</strong>是指一个线程在等待某个操作完成时，会不断地进行忙等待，即循环检查操作是否完成，直到操作完成才会退出循环。这种等待方式可以避免线程上下文的切换，从而提高程序的性能。自旋优化通常适用于等待时间较短的情况，因为长时间的自旋会占用CPU资源，导致其他线程无法得到执行。</p>
+<p>在Java中，自旋优化通常是通过synchronized关键字实现的。当一个线程尝试获取一个被锁定的对象时，如果该对象已经被其他线程锁定，那么该线程会进行自旋等待，直到该对象被释放为止。</p>
+<h3 id="四、偏向锁概念"><a href="#四、偏向锁概念" class="headerlink" title="四、偏向锁概念"></a>四、偏向锁概念</h3><p>轻量级锁在<strong>没有竞争</strong>时(就自己这个线程)，每次重入仍然需要执行 CAS操作。</p>
+<p>Java 6中引入了偏向锁来做进一步优化：只有第一次使用CAS将线程ID设置到对象的Mark Word头，之后发现这个线程ID是自己的就表示没有竞争，不用重新CAS。以后只要不发生竞争，这个对象就归该线程所有。</p>
+<ul>
+<li><strong>升级为轻量级锁的情况 (会进行偏向锁撤销)</strong> : 获取偏向锁的时候, 发现线程ID不是自己的, 此时通过CAS替换操作, 操作成功了, 此时该线程就获得了锁对象。( 此时是交替访问临界区, 撤销偏向锁, 升级为轻量级锁)。</li>
+<li><strong>升级为重量级锁的情况 (会进行偏向锁撤销)</strong> : 获取偏向锁的时候, 发现线程ID不是自己的, 此时通过CAS替换操作, 操作失败了, 此时说明发生了锁竞争。( 此时是多线程访问临界区, 撤销偏向锁, 升级为重量级锁)。</li>
+</ul>
+<p><strong>示例</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs Java"><span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">object</span> <span class="hljs-variable">obj</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">object</span>();<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">m1</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-keyword">synchronized</span>( obj ) &#123;<br>        <span class="hljs-comment">//同步块A</span><br>        m2();<br>    &#125;<br>&#125;<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">m2</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-keyword">synchronized</span>( obj ) &#123;<br>        <span class="hljs-comment">//同步块B</span><br>        m3();<br>    &#125;<br>&#125;<br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">m3</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-keyword">synchronized</span>( obj ) &#123;<br>        <span class="hljs-comment">//同步块C</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679898194980.png" srcset="/img/loading.gif" lazyload></p>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679898228352.png" srcset="/img/loading.gif" lazyload></p>
+<h3 id="五、偏向状态"><a href="#五、偏向状态" class="headerlink" title="五、偏向状态"></a>五、偏向状态</h3><p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679898298970.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>状态说明</strong></p>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679898349119.png" srcset="/img/loading.gif" lazyload></p>
+<p><strong>一个对象创建时：</strong></p>
+<ul>
+<li>如果开启了偏向锁（默认开启），那么对象创建后，markword 值为 <code>0x05</code> 即最后 3 位为 101，这时它的 thread、epoch、age 都为 0</li>
+<li>偏向锁是默认是延迟的，不会在程序启动时立即生效，如果想避免延迟，可以加 VM 参数 <code>- XX:BiasedLockingStartupDelay=0</code> 来禁用延迟</li>
+<li>如果没有开启偏向锁，那么对象创建后，markword 值为 0x01 即最后 3 位为 001，这时它的 hashcode、 age 都为 0，<strong>第一次用到 hashcode 时才会赋值</strong></li>
+</ul>
+<h5 id="（1）测试偏向锁"><a href="#（1）测试偏向锁" class="headerlink" title="（1）测试偏向锁"></a>（1）测试偏向锁</h5><ul>
+<li>利用jol第三方工具来查看对象头信息(注意这里扩展了jol让它输出更为简洁)</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">//添如虚拟机参数-XX:BiasedLockingStartupDelay=0</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> IOException &#123;<br>    <span class="hljs-type">Dog</span> <span class="hljs-variable">d</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Dog</span>();<br>    <span class="hljs-type">ClassLayout</span> <span class="hljs-variable">classLayout</span> <span class="hljs-operator">=</span> ClassLayout.lparseInstance(d);<br>    <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>        log.debug(<span class="hljs-string">&quot;synchronized前&quot;</span>);<br>        System.out.println(classLayout.toPrintableSimple(<span class="hljs-literal">true</span>));<br>        <span class="hljs-keyword">synchronized</span> (d) &#123;<br>            log.debug(<span class="hljs-string">&quot;synchronized中&quot;</span>);<br>            System.out.println(classlayout.toPrintableSimple(<span class="hljs-literal">true</span>));<br>        &#125;<br>        log.debug(<span class="hljs-string">&quot; synchraoized后&quot;</span>);<br>        System.out.println(classLayout.toPrintablesimple(<span class="hljs-literal">true</span>));<br>    &#125;, <span class="hljs-string">&quot;t1&quot;</span>).start();<br>&#125;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Dog</span>&#123;<br><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>输出结果</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-number">11</span>:08:<span class="hljs-number">58.117</span> c. TestBiased [t1] - <span class="hljs-keyword">synchronized</span> 前<br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000101</span><br><span class="hljs-number">11</span>:08:<span class="hljs-number">58.121</span> C. TestBiased [t1] - <span class="hljs-keyword">synchronized</span> 中<br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">11010000</span> <span class="hljs-number">00000101</span><br><span class="hljs-number">11</span>:08:<span class="hljs-number">58.121</span> C. TestBiased [t1] - <span class="hljs-keyword">synchronized</span> 后<br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">11010000</span> <span class="hljs-number">00000101</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意</p>
+<p>处于偏向锁的对象解锁后，线程 id 仍存储于对象头中</p>
+</blockquote>
+<h5 id="（2）测试禁用"><a href="#（2）测试禁用" class="headerlink" title="（2）测试禁用"></a>（2）测试禁用</h5><p>在上面测试代码运行时在添加 VM 参数 <code>-XX:-UseBiasedLocking</code> 禁用偏向锁</p>
+<p><strong>输出结果</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-number">11</span>:<span class="hljs-number">13</span>:<span class="hljs-number">10.018</span> c.TestBiased [t1] - <span class="hljs-keyword">synchronized</span> 前<br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000001</span><br><span class="hljs-number">11</span>:<span class="hljs-number">13</span>:<span class="hljs-number">10.021</span> C. TestBiased [t1] - <span class="hljs-keyword">synchronized</span> 中<br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00100000</span> <span class="hljs-number">00010100</span> <span class="hljs-number">11110011</span> <span class="hljs-number">10001000</span><br><span class="hljs-number">11</span>:<span class="hljs-number">13</span>:<span class="hljs-number">10.021</span> C. TestBiased [t1] - <span class="hljs-keyword">synchronized</span> 后<br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000001</span><br></code></pre></td></tr></table></figure>
+
+<p>注意：最后三位001表示没有加偏向锁，最后两位00表示加了轻量级锁</p>
+<p>说明偏向锁禁用成功！</p>
+<h5 id="（3）测试hasecode"><a href="#（3）测试hasecode" class="headerlink" title="（3）测试hasecode"></a>（3）测试hasecode</h5><ul>
+<li>正常状态对象一开始是没有 hashCode 的，第一次调用才生成</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> IOException &#123;<br>    <span class="hljs-type">Dog</span> <span class="hljs-variable">d</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Dog</span>();<br>    d.hashcode();<span class="hljs-comment">//调用对象hashcode，使得偏向锁禁用</span><br>    <span class="hljs-type">ClassLayout</span> <span class="hljs-variable">classLayout</span> <span class="hljs-operator">=</span> ClassLayout.lparseInstance(d);<br>    <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>        log.debug(<span class="hljs-string">&quot;synchronized前&quot;</span>);<br>        System.out.println(classLayout.toPrintableSimple(<span class="hljs-literal">true</span>));<br>        <span class="hljs-keyword">synchronized</span> (d) &#123;<br>            log.debug(<span class="hljs-string">&quot;synchronized中&quot;</span>);<br>            System.out.println(classlayout.toPrintableSimple(<span class="hljs-literal">true</span>));<br>        &#125;<br>        log.debug(<span class="hljs-string">&quot; synchraoized后&quot;</span>);<br>        System.out.println(classLayout.toPrintablesimple(<span class="hljs-literal">true</span>));<br>    &#125;, <span class="hljs-string">&quot;t1&quot;</span>).start();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/1679898298970.png" srcset="/img/loading.gif" lazyload></p>
+<p>观察如上的MarkWord格式，Normal下的hashcode占31位，Biased下的thread:54位，无法在装下31位的hashcode。所以，<strong>可偏向对象调了hashcode()后撤销偏向状态</strong></p>
+<blockquote>
+<p>轻量级锁：hashcode会存到线程栈帧的锁记录(lock Record)中</p>
+<p>重量级锁：hashcode会存到monitor对象中</p>
+</blockquote>
+<h3 id="六、偏向锁撤销场景"><a href="#六、偏向锁撤销场景" class="headerlink" title="六、偏向锁撤销场景"></a>六、偏向锁撤销场景</h3><h4 id="6-1-调用对象haseCode"><a href="#6-1-调用对象haseCode" class="headerlink" title="6.1 调用对象haseCode"></a>6.1 调用对象haseCode</h4><p>调用了对象的hashCode，但偏向锁的对象MarkWord中存储的是线程id，如果调用hashCode会导致偏向锁被撤销</p>
+<ul>
+<li>轻量级锁会在锁记录中记录hashCode</li>
+<li>重量级锁会在Monitor中记录hashCode</li>
+</ul>
+<p>在调用hashCode后使用偏向锁，记得去掉<code>-XX: -UseBiasedLocking</code></p>
+<p><strong>输出结果</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-number">11</span>:<span class="hljs-number">22</span>:<span class="hljs-number">10.386</span> c.TestBiased [main] - 调用hashCode: <span class="hljs-number">1778535015</span><br><span class="hljs-number">11</span>:<span class="hljs-number">22</span>:<span class="hljs-number">10.391</span> c.TestBiased [t1] - <span class="hljs-keyword">synchronized</span> 前<br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">01101010</span> <span class="hljs-number">00000010</span> <span class="hljs-number">01001010</span> <span class="hljs-number">01100111</span> <span class="hljs-number">00000001</span> 正常状态，没有偏向锁<br><span class="hljs-number">11</span>:<span class="hljs-number">22</span>:<span class="hljs-number">10.393</span> C. TestBiased [t1] - <span class="hljs-keyword">synchronized</span> 中<br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00100000</span> <span class="hljs-number">11000011</span> <span class="hljs-number">11110011</span> <span class="hljs-number">01101000</span> 加了轻量级锁<br><span class="hljs-number">11</span>:<span class="hljs-number">22</span>:<span class="hljs-number">10.393</span> c.TestBiased [t1] - <span class="hljs-keyword">synchronized</span> 后<br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">01101010</span> <span class="hljs-number">00000010</span> <span class="hljs-number">01001010</span> <span class="hljs-number">01100111</span> <span class="hljs-number">00000001</span> 撤销 正常状态，没有偏向锁<br></code></pre></td></tr></table></figure>
+
+<h4 id="6-2-其它线程使用对象"><a href="#6-2-其它线程使用对象" class="headerlink" title="6.2 其它线程使用对象"></a>6.2 其它线程使用对象</h4><p><strong>偏向锁、轻量级锁的使用条件, 都是在于多个线程没有对同一个对象进行<code>锁竞争</code>的前提下, 如果有<code>锁竞争</code>,此时就使用重量级锁。</strong></p>
+<p>当有其它线程使用偏向锁对象时，会将偏向锁升级为轻量级锁</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">test2</span><span class="hljs-params">()</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>    <span class="hljs-type">Dog</span> <span class="hljs-variable">d</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Dog</span>();<br>    <span class="hljs-type">Thread</span> <span class="hljs-variable">t1</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>        <span class="hljs-keyword">synchronized</span> (d) &#123;<br>            log.debug(ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>        &#125;<br>        <span class="hljs-keyword">synchronized</span> (TestBiased.class) &#123;<br>            TestBiased.class.notify();<br>        &#125;<br>        <br>    &#125;, <span class="hljs-string">&quot;t1&quot;</span>);<br>    t1.start();<br>    <span class="hljs-type">Thread</span> <span class="hljs-variable">t2</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>        <span class="hljs-keyword">synchronized</span> (TestBiased.class) &#123;<br>            <span class="hljs-keyword">try</span> &#123;<br>                TestBiased.class.wait();<br>            &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>                e.printStackTrace();<br>            &#125;<br>        &#125;<br>        log.debug(ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>        <span class="hljs-keyword">synchronized</span> (d) &#123;<br>            <span class="hljs-comment">//因为t1线程已经释放了d对象锁，所以没有发生锁的竞争，只是升级为轻量级锁</span><br>            log.debug(ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>        &#125;<br>        log.debug(ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>    &#125;, <span class="hljs-string">&quot;t2&quot;</span>);<br>    t2.start();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>输出结果</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java">[t1] - <span class="hljs-number">0000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">0000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">01000001</span>  <span class="hljs-number">00010000</span>  <span class="hljs-number">00000101</span> <span class="hljs-comment">//偏向锁</span><br>[t2] - <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">0000000</span> <span class="hljs-number">0000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">01000001</span>  <span class="hljs-number">00010000</span>  <span class="hljs-number">00000101</span> <span class="hljs-comment">//偏向锁</span><br>[t2] - <span class="hljs-number">00000000</span> <span class="hljs-number">0000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">0000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">10110101</span>  <span class="hljs-number">11110000</span>  <span class="hljs-number">01000000</span> <span class="hljs-comment">//撤销偏向锁，改为轻量级锁，保留线程id</span><br>[t2] - <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000001</span> <span class="hljs-comment">//恢复正常</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="6-3-调用wait-x2F-notify"><a href="#6-3-调用wait-x2F-notify" class="headerlink" title="6.3 调用wait&#x2F;notify"></a>6.3 调用wait&#x2F;notify</h4><p>wait&#x2F;notify只有重锁才有，任何线程对象调用其时，会升级为<strong>重锁</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>    <span class="hljs-type">Dog</span> <span class="hljs-variable">d</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Dog</span>();<br>    <span class="hljs-type">Thread</span> <span class="hljs-variable">t1</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>        log.debug(ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>        <span class="hljs-keyword">synchronized</span> (d) &#123;<br>            log.debug(ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>            <span class="hljs-keyword">try</span> &#123;<br>                d.wait();<br>            &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>                e.printStackTrace();<br>            &#125;<br>            log.debug(ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>        &#125;<br>    &#125;, <span class="hljs-string">&quot;t1&quot;</span>);<br>    t1.start();<br>    <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>        <span class="hljs-keyword">try</span> &#123;<br>            Thread.sleep(<span class="hljs-number">6000</span>);<br>        &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>            e.printStackTrace();<br>        &#125;<br>        <span class="hljs-keyword">synchronized</span> (d) &#123;<br>            log.debug(<span class="hljs-string">&quot;notify&quot;</span>);<br>            d.notify();<br>        &#125;<br>    &#125;, <span class="hljs-string">&quot;t2&quot;</span>).start();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>输出结果</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java">[t1] - <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000101</span><br>[t1] - <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">10110011</span> <span class="hljs-number">11111000</span> <span class="hljs-number">00000101</span><br>[t2] - notify<br>[t1] - <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011100</span> <span class="hljs-number">11010100</span> <span class="hljs-number">00001101</span> <span class="hljs-number">11001010</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="七、批量重偏向"><a href="#七、批量重偏向" class="headerlink" title="七、批量重偏向"></a>七、批量重偏向</h3><p>如果对象虽然被多个线程访问，但没有竞争，这时偏向了线程 T1 的对象仍有机会重新偏向 T2，重偏向会重置对象的 Thread ID。</p>
+<p>当撤销偏向锁阈值超过 20 次后，jvm 会这样觉得，我是不是偏向错了呢，于是会在给这些对象加锁时重新偏向至加锁线程</p>
+<p><strong>示例</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Demo01</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">test</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-comment">//</span><br>        Vector&lt;Dog&gt; list = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>&lt;&gt;();<br>        <span class="hljs-type">Thread</span> <span class="hljs-variable">t1</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">30</span>; i++) &#123;<br>                <span class="hljs-type">Dog</span> <span class="hljs-variable">d</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Dog</span>();<br>                list.add(d);<br>                <span class="hljs-keyword">synchronized</span> (d) &#123;<br>                    log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>                &#125;<br>            &#125;<br>            <span class="hljs-keyword">synchronized</span> (list) &#123;<br>                list.notify();<span class="hljs-comment">//唤醒list</span><br>            &#125;<br>        &#125;, <span class="hljs-string">&quot;t1&quot;</span>);<br>        t1.start();<br>        <span class="hljs-type">Thread</span> <span class="hljs-variable">t2</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            <span class="hljs-keyword">synchronized</span> (list) &#123;<br>                <span class="hljs-keyword">try</span> &#123;<br>                    list.wait();<span class="hljs-comment">//阻塞list，释放锁</span><br>                &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>                    e.printStackTrace();<br>                &#125;<br>            &#125;<br>            log.debug(<span class="hljs-string">&quot;===========&gt; &quot;</span>);<br>            <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">30</span>; i++) &#123;<br>                <span class="hljs-type">Dog</span> <span class="hljs-variable">d</span> <span class="hljs-operator">=</span> list.get(i);<br>                log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintablesimple(<span class="hljs-literal">true</span>));<br>                <span class="hljs-keyword">synchronized</span> (d) &#123;<br>                    log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintablesimple(<span class="hljs-literal">true</span>));<br>                &#125;<br>                    log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>            &#125;<br>        &#125;, <span class="hljs-string">&quot;t2&quot;</span>);<br>        t2.start();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>输出结果</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs java">xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx 线程id    线程id   线程id    加锁状态<br>[t1] - <span class="hljs-number">0</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01000000</span> <span class="hljs-number">00000101</span><br>[t1] - <span class="hljs-number">1</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01000000</span> <span class="hljs-number">00000101</span><br>[t1] - <span class="hljs-number">2</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01000000</span> <span class="hljs-number">00000101</span><br>[t1] - <span class="hljs-number">3</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01000000</span> <span class="hljs-number">00000101</span><br>[t1] - <span class="hljs-number">4</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01000000</span> <span class="hljs-number">00000101</span><br>[t1] - <span class="hljs-number">5</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01000000</span> <span class="hljs-number">00000101</span><br><br>...t1 从<span class="hljs-number">1</span>到<span class="hljs-number">29</span>都是加的线程id（<span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span>）偏向锁，状态看最后<span class="hljs-number">101</span><br><br>[t2] - ============&gt;<br>[t2] - <span class="hljs-number">0</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01000000</span> <span class="hljs-number">00000101</span> <span class="hljs-comment">//原始t1的偏向锁状态</span><br>[t2] - <span class="hljs-number">0</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00100000</span> <span class="hljs-number">01111010</span> <span class="hljs-number">11110110</span> <span class="hljs-number">01110000</span> <span class="hljs-comment">//撤销偏向锁，升级轻量级锁</span><br>[t2] - <span class="hljs-number">0</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000001</span><span class="hljs-comment">//解锁后，变为不可偏向状态</span><br>[t2] - <span class="hljs-number">1</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01000000</span> <span class="hljs-number">00000101</span><br>[t2] - <span class="hljs-number">1</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00100000</span> <span class="hljs-number">01111010</span> <span class="hljs-number">11110110</span> <span class="hljs-number">01110000</span><br>[t2] - <span class="hljs-number">1</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000001</span><br>...<br><span class="hljs-comment">//我们发现，到了第20个的时候（从0算第1个），又变成了偏向锁状态，但是偏向的id变成了t2了</span><br><span class="hljs-comment">//之后所有的对象都是直接偏向的状态，而不是先撤销t1偏锁，再升级轻锁 =&gt; 批量重偏向</span><br>[t2] - <span class="hljs-number">19</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01000000</span> <span class="hljs-number">00000101</span><br>[t2] - <span class="hljs-number">19</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01010001</span> <span class="hljs-number">00000101</span><br>[t2] - <span class="hljs-number">19</span><br><span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00000000</span> <span class="hljs-number">00011111</span> <span class="hljs-number">11101011</span> <span class="hljs-number">01010001</span> <span class="hljs-number">00000101</span><br>...<br></code></pre></td></tr></table></figure>
+
+<h3 id="八、批量撤销"><a href="#八、批量撤销" class="headerlink" title="八、批量撤销"></a>八、批量撤销</h3><p>当撤销偏向锁阈值超过40次后，jvm 会这样觉得，自己确实偏向错了, 根本就不该偏向。于是整个类的所有对象都会变为不可偏向的，新建的对象也是不可偏向的</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Demo02</span> &#123;<br>    <span class="hljs-keyword">static</span> Thread t1, t2, t3;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">test</span><span class="hljs-params">()</span> &#123;<br>        Vector&lt;Dog&gt; list = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Vector</span>&lt;&gt;();<br>        <span class="hljs-type">int</span> <span class="hljs-variable">loopNumber</span> <span class="hljs-operator">=</span> <span class="hljs-number">39</span>;<br>        t1 = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; loopNumber; i++) &#123;<br>                <span class="hljs-type">Dog</span> <span class="hljs-variable">d</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Dog</span>();<br>                list.add(d);<br>                <span class="hljs-comment">//39个对象加上偏向锁，偏向t1线程</span><br>                <span class="hljs-keyword">synchronized</span> (d) &#123;<br>                    log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>                &#125;<br>                <span class="hljs-comment">//39个对象加完锁唤醒t2(park，unpark方式)</span><br>                LockSupport.unpark(t2);<br>            &#125;<br>        &#125;, <span class="hljs-string">&quot;t1&quot;</span>);<br>        t1.start();<br>        t2 = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            LockSupport.park();<span class="hljs-comment">//先阻塞自己</span><br>            log.debug(<span class="hljs-string">&quot;============&gt; &quot;</span>);<br>            <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; loopNumber; i++) &#123;<br>                <span class="hljs-type">Dog</span> <span class="hljs-variable">d</span> <span class="hljs-operator">=</span> list.get(i);<span class="hljs-comment">//拿出list对象</span><br>                Log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>                <span class="hljs-comment">//对象加上偏向锁，偏向t2线程</span><br>                <span class="hljs-comment">//前19个对象是撤销t1偏向锁，之后对象是批量重偏向</span><br>                <span class="hljs-keyword">synchronized</span> (d) &#123;<br>                    Log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintablesimple(<span class="hljs-literal">true</span>));<br>                &#125;<br>                Log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>            &#125;<br>            <span class="hljs-comment">//此时已经重偏向了20次</span><br>            LockSupport.unpark(t3);<span class="hljs-comment">//唤醒t3</span><br><br>        &#125;, <span class="hljs-string">&quot;t2&quot;</span>);<br>        t2.start();<br>        t3 = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            LockSupport.park();<span class="hljs-comment">//先阻塞自己</span><br>            log.debug(<span class="hljs-string">&quot;============&gt; &quot;</span>);<br>            <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; loopNumber; i++) &#123;<br>                <span class="hljs-type">Dog</span> <span class="hljs-variable">d</span> <span class="hljs-operator">=</span> list.get(i);<span class="hljs-comment">//拿出list对象</span><br>                Log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>                <span class="hljs-comment">//对象加上偏向锁，偏向t3线程</span><br>                <span class="hljs-comment">//前19个对象是撤销t2偏向锁，注意：之后对象也是撤销t2偏锁，没那么多机会重偏向锁了</span><br>                <span class="hljs-keyword">synchronized</span> (d) &#123;<br>                    Log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintablesimple(<span class="hljs-literal">true</span>));<br>                &#125;<br>                Log.debug(i + <span class="hljs-string">&quot;\t&quot;</span> + ClassLayout.parseInstance(d).toPrintableSimple(<span class="hljs-literal">true</span>));<br>            &#125;<br>            <span class="hljs-comment">//最后撤销偏向锁达到39次</span><br>        &#125;, <span class="hljs-string">&quot;t3&quot;</span>);<br>        t3.start();<br><br>        t3.join();<br>        <span class="hljs-comment">/*</span><br><span class="hljs-comment">         当撤销偏向锁阈值超过40次后，jvm会这样觉得，自己确实偏向错了，根本就不该偏向。</span><br><span class="hljs-comment">         于是整个类的所有对象都会变为不可偏向的，新建的对象也是不可偏向的，所以new Dog()是不可偏向的</span><br><span class="hljs-comment">        */</span><br>        Log.debug(ClassLayout.parseInstance(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Dog</span>()).toPrintableSimple(<span class="hljs-literal">true</span>));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="九、锁消除"><a href="#九、锁消除" class="headerlink" title="九、锁消除"></a>九、锁消除</h3><ul>
+<li>线程同步的代价是相当高的，同步的后果是降低并发性和性能。</li>
+<li>在动态编译同步块的时候，JIT编译器可以<strong>借助逃逸分析</strong>来判断同步块所使用的锁对象是否只能够被一个线程访问而没有被发布到其他线程。</li>
+<li>如果没有，那么JIT编译器在编译这个同步块的时候就会取消对这部分代码的同步。这样就能大大提高并发性和性能。这个取消同步的过程就叫同步省略，也叫锁消除。</li>
+</ul>
+<p>例如下面的代码，<code>根本起不到锁的作用</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">f</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">Object</span> <span class="hljs-variable">hellis</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Object</span>();<br>    <span class="hljs-keyword">synchronized</span>(hellis) &#123;<br>        System.out.println(hellis);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>代码中对hellis这个对象加锁，但是hellis对象的生命周期只在f( )方法中，并不会被其他线程所访问到，所以在JIT编译阶段就会被优化掉，优化成：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">f</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">Object</span> <span class="hljs-variable">hellis</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Object</span>();<br>        System.out.println(hellis);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="十、锁粗化"><a href="#十、锁粗化" class="headerlink" title="十、锁粗化"></a>十、锁粗化</h4><p>锁粗化是一种优化方式，它能够解决线程重复加锁的问题。有些程序在处理同一个对象的时候，需要执行多个操作，如果每个操作都加锁，就会导致线程频繁地加锁和解锁。这样会影响程序的性能。锁粗化的处理方法是将多个锁粗略化为一个锁，这样就减少了加锁和解锁的次数，提高了程序的效率。需要注意的是，锁粗化和细分锁的粒度不同，它们解决的问题也不同。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/JUC/" class="category-chain-item">JUC</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/JUC/">#JUC</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>synchronized原理进阶</div>
+      <div>http://example.com/2023/03/27/synchronized原理进阶/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>程序员小魏</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年3月27日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2023/03/27/wait-nofity/" title="wait nofity">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">wait nofity</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/03/27/%E6%9E%9A%E4%B8%BE%E7%B1%BB/" title="枚举类">
+                        <span class="hidden-mobile">枚举类</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"l6YWrDG6zdbBheC4FYWffssk-MdYXbMMI","appKey":"JGIpLOPqsRK2CsLhfjzvIEtc","path":"window.location.pathname","placeholder":"留言仅限讨论，禁止广告等行为","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://l6ywrdg6.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <div style="font-size: 0.85rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/love.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/xiaoxingxing.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/xiaoxuehua.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/caidai.js"></script>
+<script src="/js/star.js"></script>
+<script src="/js/renwu.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
