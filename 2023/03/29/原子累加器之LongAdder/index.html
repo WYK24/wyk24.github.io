@@ -1,0 +1,849 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/tree.png">
+  <link rel="icon" href="/img/xiaowei.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="程序员小魏">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="比较并发编程中的各种原子累加器，LongAdder的优势和原理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="原子累加器之LongAdder">
+<meta property="og:url" content="http://example.com/2023/03/29/%E5%8E%9F%E5%AD%90%E7%B4%AF%E5%8A%A0%E5%99%A8%E4%B9%8BLongAdder/index.html">
+<meta property="og:site_name" content="程序员小魏的后端之旅">
+<meta property="og:description" content="比较并发编程中的各种原子累加器，LongAdder的优势和原理">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/JUC.png">
+<meta property="article:published_time" content="2023-03-29T11:54:53.000Z">
+<meta property="article:modified_time" content="2023-03-29T12:01:12.558Z">
+<meta property="article:author" content="程序员小魏">
+<meta property="article:tag" content="JUC">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/img/JUC.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>原子累加器之LongAdder - 程序员小魏的后端之旅</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_3846514_kabxni94auf.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/bynotes/texiao/source/css/shubiao.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/bynotes/texiao/source/css/gundongtiao.css">
+<link rel="stylesheet" href="/css/mac.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":true,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>程序员小魏的后端之旅</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives">
+                <i class="iconfont icon-books"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories">
+                <i class="iconfont icon-th-large"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-book"></i>
+                <span>文档</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/">
+                    
+                    <span>主题博客</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/guide/">
+                    
+                    <span>配置指南</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/icon/">
+                    
+                    <span>图标用法</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="原子累加器之LongAdder"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        程序员小魏
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-03-29 19:54" pubdate>
+           2023 年 03 月 29 日 , 晚上 07:54 , 星期三
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          59 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">原子累加器之LongAdder</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="一、原子累加器对比"><a href="#一、原子累加器对比" class="headerlink" title="一、原子累加器对比"></a>一、原子累加器对比</h3><p>我们通过如下代码，比较<code>synchronized</code>、<code>AtomicInteger</code>、<code>AtomicLong</code>、<code>LongAdder</code>、<code>LongAccumulator</code>五种计数性能。</p>
+<p><strong>示例</strong></p>
+<blockquote>
+<p>需求：热点商品点赞计算器，点赞数进行统计，不要求实时精确。50个线程，每个线程100W次，统计总点赞数。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">package</span> site.weiyikai.demo06;<br><br><br><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicInteger;<br><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicLong;<br><span class="hljs-keyword">import</span> java.util.concurrent.atomic.LongAccumulator;<br><span class="hljs-keyword">import</span> java.util.concurrent.atomic.LongAdder;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@author</span> xiaowei</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@create</span> 2023-03-29 19:28</span><br><span class="hljs-comment"> */</span><br><span class="hljs-comment">//需求：热点商品点赞计算器，点赞数进行统计，不要求实时精确。50个线程，每个线程100W次，统计总点赞数。</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">ClickNumber</span> &#123;<br>    <span class="hljs-type">int</span> <span class="hljs-variable">number</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">synchronized</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">add_synchronized</span><span class="hljs-params">()</span>&#123;<br>        number++;<br>    &#125;<br><br>    <span class="hljs-type">AtomicInteger</span> <span class="hljs-variable">atomicInteger</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">AtomicInteger</span>();<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">add_AtomicInteger</span><span class="hljs-params">()</span>&#123;<br>        atomicInteger.incrementAndGet();<br>    &#125;<br><br>    <span class="hljs-type">AtomicLong</span> <span class="hljs-variable">atomicLong</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">AtomicLong</span>();<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">add_AtomicLong</span><span class="hljs-params">()</span>&#123;<br>        atomicLong.incrementAndGet();<br>    &#125;<br><br>    <span class="hljs-type">LongAdder</span> <span class="hljs-variable">longAdder</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">LongAdder</span>();<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">add_LongAdder</span><span class="hljs-params">()</span>&#123;<br>        longAdder.increment();<br>    &#125;<br><br>    <span class="hljs-type">LongAccumulator</span> <span class="hljs-variable">longAccumulator</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">LongAccumulator</span>((x, y)-&gt;x+y,<span class="hljs-number">0</span>);<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">add_longAccumulator</span><span class="hljs-params">()</span>&#123;<br>        longAccumulator.accumulate(<span class="hljs-number">1</span>);<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">LongAdderCalcDemo</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> <span class="hljs-variable">SIZE_THREAD</span> <span class="hljs-operator">=</span> <span class="hljs-number">50</span>;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> <span class="hljs-variable">_1w</span> <span class="hljs-operator">=</span> <span class="hljs-number">10000</span>;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>        <span class="hljs-type">ClickNumber</span> <span class="hljs-variable">clickNumber</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ClickNumber</span>();<br>        <span class="hljs-type">long</span> <span class="hljs-variable">startTime</span> <span class="hljs-operator">=</span> System.currentTimeMillis();<br>        <span class="hljs-type">long</span> <span class="hljs-variable">endTime</span> <span class="hljs-operator">=</span> System.currentTimeMillis();<br>        <span class="hljs-type">CountDownLatch</span> <span class="hljs-variable">latch_synchronized</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">CountDownLatch</span>(SIZE_THREAD);<br>        CountDownLatch latch_AtomicInteger= <span class="hljs-keyword">new</span> <span class="hljs-title class_">CountDownLatch</span>(SIZE_THREAD);<br>        <span class="hljs-type">CountDownLatch</span> <span class="hljs-variable">latch_AtomicLong</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">CountDownLatch</span>(SIZE_THREAD);<br>        <span class="hljs-type">CountDownLatch</span> <span class="hljs-variable">latch_LongAdder</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">CountDownLatch</span>(SIZE_THREAD);<br>        <span class="hljs-type">CountDownLatch</span> <span class="hljs-variable">latch_LongAccumulator</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">CountDownLatch</span>(SIZE_THREAD);<br><br>        startTime = System.currentTimeMillis();<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; i &lt;= SIZE_THREAD; i++) &#123;<br>            <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(()-&gt;&#123;<br>                <span class="hljs-keyword">try</span> &#123;<br>                    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">j</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; j &lt;= <span class="hljs-number">100</span>*_1w; j++) &#123;<br>                        clickNumber.add_synchronized();<br>                    &#125;<br>                &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>                    e.printStackTrace();<br>                &#125; <span class="hljs-keyword">finally</span> &#123;<br>                    latch_synchronized.countDown();<br>                &#125;<br>            &#125;,String.valueOf(i)).start();<br>        &#125;<br>        latch_synchronized.await();<br>        endTime = System.currentTimeMillis();<br>        System.out.println(<span class="hljs-string">&quot;synchronized花费时间：&quot;</span>+ (endTime-startTime)+<span class="hljs-string">&quot; 数值为：&quot;</span>+clickNumber.number);<br><br><br>        startTime = System.currentTimeMillis();<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; i &lt;= SIZE_THREAD; i++) &#123;<br>            <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(()-&gt;&#123;<br>                <span class="hljs-keyword">try</span> &#123;<br>                    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">j</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; j &lt;= <span class="hljs-number">100</span>*_1w; j++) &#123;<br>                        clickNumber.add_AtomicInteger();<br>                    &#125;<br>                &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>                    e.printStackTrace();<br>                &#125; <span class="hljs-keyword">finally</span> &#123;<br>                    latch_AtomicInteger.countDown();<br>                &#125;<br>            &#125;,String.valueOf(i)).start();<br>        &#125;<br>        latch_AtomicInteger.await();<br>        endTime = System.currentTimeMillis();<br>        System.out.println(<span class="hljs-string">&quot;AtomicInteger花费时间：&quot;</span>+ (endTime-startTime)+<span class="hljs-string">&quot; 数值为：&quot;</span>+clickNumber.atomicInteger.get());<br><br>        startTime = System.currentTimeMillis();<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; i &lt;= SIZE_THREAD; i++) &#123;<br>            <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(()-&gt;&#123;<br>                <span class="hljs-keyword">try</span> &#123;<br>                    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">j</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; j &lt;= <span class="hljs-number">100</span>*_1w; j++) &#123;<br>                        clickNumber.add_AtomicLong();<br>                    &#125;<br>                &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>                    e.printStackTrace();<br>                &#125; <span class="hljs-keyword">finally</span> &#123;<br>                    latch_AtomicLong.countDown();<br>                &#125;<br>            &#125;,String.valueOf(i)).start();<br>        &#125;<br>        latch_AtomicLong.await();<br>        endTime = System.currentTimeMillis();<br>        System.out.println(<span class="hljs-string">&quot;AtomicLong花费时间：&quot;</span>+ (endTime-startTime)+<span class="hljs-string">&quot; 数值为：&quot;</span>+clickNumber.atomicLong.get());<br><br>        startTime = System.currentTimeMillis();<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; i &lt;= SIZE_THREAD; i++) &#123;<br>            <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(()-&gt;&#123;<br>                <span class="hljs-keyword">try</span> &#123;<br>                    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">j</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; j &lt;= <span class="hljs-number">100</span>*_1w; j++) &#123;<br>                        clickNumber.add_LongAdder();<br>                    &#125;<br>                &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>                    e.printStackTrace();<br>                &#125; <span class="hljs-keyword">finally</span> &#123;<br>                    latch_LongAdder.countDown();<br>                &#125;<br>            &#125;,String.valueOf(i)).start();<br>        &#125;<br>        latch_LongAdder.await();<br>        endTime = System.currentTimeMillis();<br>        System.out.println(<span class="hljs-string">&quot;LongAdder花费时间：&quot;</span>+ (endTime-startTime)+<span class="hljs-string">&quot; 数值为：&quot;</span>+clickNumber.longAdder.longValue());<br><br>        startTime = System.currentTimeMillis();<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; i &lt;= SIZE_THREAD; i++) &#123;<br>            <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(()-&gt;&#123;<br>                <span class="hljs-keyword">try</span> &#123;<br>                    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">j</span> <span class="hljs-operator">=</span> <span class="hljs-number">1</span>; j &lt;= <span class="hljs-number">100</span>*_1w; j++) &#123;<br>                        clickNumber.add_longAccumulator();<br>                    &#125;<br>                &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;<br>                    e.printStackTrace();<br>                &#125; <span class="hljs-keyword">finally</span> &#123;<br>                    latch_LongAccumulator.countDown();<br>                &#125;<br><br>            &#125;,String.valueOf(i)).start();<br>        &#125;<br>        latch_LongAccumulator.await();<br>        endTime = System.currentTimeMillis();<br>        System.out.println(<span class="hljs-string">&quot;LongAccumulator花费时间：&quot;</span>+ (endTime-startTime)+<span class="hljs-string">&quot; 数值为：&quot;</span>+clickNumber.longAccumulator.longValue());<br><br>    &#125;<br>&#125;<br><br></code></pre></td></tr></table></figure>
+
+<p><strong>运行结果</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-keyword">synchronized</span>花费时间：<span class="hljs-number">1314</span> 数值为：<span class="hljs-number">50000000</span><br>AtomicInteger花费时间：<span class="hljs-number">609</span> 数值为：<span class="hljs-number">50000000</span><br>AtomicLong花费时间：<span class="hljs-number">639</span> 数值为：<span class="hljs-number">50000000</span><br>LongAdder花费时间：<span class="hljs-number">94</span> 数值为：<span class="hljs-number">50000000</span><br>LongAccumulator花费时间：<span class="hljs-number">45</span> 数值为：<span class="hljs-number">50000000</span><br></code></pre></td></tr></table></figure>
+
+<p>通过上面的代码运行我们可以清晰地看到，每种方式都有效的产完成了累加的效果，但是明显使用<strong>LongAdder</strong>的效率要更好，甚至要高出<strong>AtomicLong</strong>好几倍。</p>
+<p>现在，我们可以简单地理解为，原子累加器就是JAVA在并发编程下提供的有保障的累加手段。</p>
+<p>那么<code>LongAdder</code>是如何做的这一点的呢？接下来我们慢慢进行分析。</p>
+<h3 id="二、LongAdder概述"><a href="#二、LongAdder概述" class="headerlink" title="二、LongAdder概述"></a>二、LongAdder概述</h3><p>JDK1.8时，<code>java.util.concurrent.atomic</code>包中提供了一个新的原子类：<code>LongAdder</code>。</p>
+<p>根据Oracle官方文档的介绍，<code>LongAdder</code>在高并发的场景下会比它的前辈<code>AtomicLong</code> 具有更好的性能，代价是消耗更多的内存空间。</p>
+<ul>
+<li><strong>AtomicLong存在的问题</strong></li>
+</ul>
+<p> 在并发量较低的环境下，线程冲突的概率比较小，自旋的次数不会很多。但是，高并发环境下，N个线程同时进行自旋操作，会出现大量失败并不断自旋的情况，此时<code>AtomicLong</code>的自旋会成为瓶颈。</p>
+<p> 这就是<code>LongAdder</code>引入的初衷,解决高并发环境下<code>AtomicLong</code>的自旋瓶颈问题。</p>
+<ul>
+<li><strong>使用场景</strong></li>
+</ul>
+<p> 在大数据处理过程，为了方便监控，需要统计数据，少不了原子计数器。为了尽量优化性能，需要采用高效的原子计数器。<br>​ 在jdk8中，引入了<code>LongAdder</code>，非常适合多线程原子计数器。与<code>AtomicLong</code>做了一个测试，<code>LongAdder</code>在多线程环境中，原子自增长性能要好很多。它常用于状态采集、统计等场景。</p>
+<h3 id="三、LongAdder原理"><a href="#三、LongAdder原理" class="headerlink" title="三、LongAdder原理"></a>三、LongAdder原理</h3><h4 id="3-1-AtomicLong和LongAdder比较"><a href="#3-1-AtomicLong和LongAdder比较" class="headerlink" title="3.1 AtomicLong和LongAdder比较"></a>3.1 AtomicLong和LongAdder比较</h4><ul>
+<li><strong>AtomicLong</strong></li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/image-20230329195927478.png" srcset="/img/loading.gif" lazyload alt="image-20230329195927478"></p>
+<p><code>AtomicLong</code>中有个内部变量value保存着实际的long值，所有的操作都是针对该变量进行。也就是说，高并发环境下，value变量其实是一个热点，也就是N个线程竞争一个热点。</p>
+<ul>
+<li><strong>LongAdder</strong></li>
+</ul>
+<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/image-20230329195947760.png" srcset="/img/loading.gif" lazyload alt="image-20230329195947760"></p>
+<p><code>LongAdder</code>的基本思路就是分散热点，将value值分散到一个数组中，不同线程会命中到数组的不同槽中，各个线程只对自己槽中的那个值进行CAS操作，这样热点就被分散了，冲突的概率就小很多。如果要获取真正的long值，只要将各个槽中的变量值累加返回。</p>
+<p><code>AtomicLong</code>是多个线程针对单个热点值value进行原子操作。而<code>LongAdder</code>是每个线程拥有自己的槽，各个线程一般只对自己槽中的那个值进行CAS操作。</p>
+<h4 id="3-2-原理"><a href="#3-2-原理" class="headerlink" title="3.2 原理"></a>3.2 原理</h4><p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/image-20230329200103587.png" srcset="/img/loading.gif" lazyload alt="image-20230329200103587"></p>
+<p><code>LongAdder</code> 在无竞争条件下，跟 <code>AtomicInteger</code> 一样，对同一个 base 进行操作。</p>
+<p>当出现了多线程竞争时采用化整为零的做法，用空间换时间，用一个数组<code>cells[]</code>，将一个 value 拆分进这个 <code>cells[]</code> 数组，多线程同时对各个 cell 中的 value 进行操作，可以对线程 id 进行 hash，再根据 hash 映射到这个数组的某个索引，然后对 cell 中的 value 进行 cas 操作，当所有线程都执行完毕，累加所有 cell 中的value 值 和 无竞争下的 base 即为最终结果。<br>总结一句公式： <strong>LongAdder &#x3D; base基础数据 + cell[] + CAS</strong> 操作，用空间换时间所以快。</p>
+<h3 id="四、基类Striped64内部三个重要成员"><a href="#四、基类Striped64内部三个重要成员" class="headerlink" title="四、基类Striped64内部三个重要成员"></a>四、基类Striped64内部三个重要成员</h3><p><code>LongAdder</code> 继承于 <code>Stripped64</code> 类，<code>base</code> 值和 <code>cell</code> 数组都在 <code>Stripped64</code> 类中定义，它的内部三个重要的成员如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 成员一：存放Cell的哈希表，大小为2的幂</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">transient</span> <span class="hljs-keyword">volatile</span> Cell[] cells;<br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 成员二：基础值</span><br><span class="hljs-comment"> * 1.在没有竞争时会更新这个值</span><br><span class="hljs-comment"> * 2.在cells初始化时，cells不可用，也会尝试通过CAS操作值累加到base</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">transient</span> <span class="hljs-keyword">volatile</span> <span class="hljs-type">long</span> base;<br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 自旋锁，通过CAS操作加锁，为0表示cells数组没有处于创建、扩容阶段</span><br><span class="hljs-comment"> * 为1表示正在创建或者扩展cells数组，不能进行新Cell元素的设置操作</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">transient</span> <span class="hljs-keyword">volatile</span> <span class="hljs-type">int</span> cellsBusy;<br></code></pre></td></tr></table></figure>
+
+<p><code>Stripped64</code> 内部包含一个 <code>base</code> 和一个 <code>Cell[]</code> 类型的 <code>cells</code> 数组，<code>cells</code> 数组又叫哈希表，在没有竞争的情况下，要累加的数通过CAS累加到 <code>base</code> 上，如果有竞争的话，会将要累加的数累加到 <code>cells</code> 数组中的某个 <code>Cell</code> 元素里面。</p>
+<p><code>Stripped64</code> 的整体值 <code>value</code> 的获取函数如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-type">long</span> <span class="hljs-title function_">longValue</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-keyword">return</span> sum();<br>&#125;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * 将多个cells数组中的值加起来的和</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-type">long</span> <span class="hljs-title function_">sum</span><span class="hljs-params">()</span> &#123;<br>    Cell[] as = cells; <br>    Cell a;<br>    <span class="hljs-type">long</span> <span class="hljs-variable">sum</span> <span class="hljs-operator">=</span> base;<br>    <span class="hljs-keyword">if</span> (as != <span class="hljs-literal">null</span>) &#123;<br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; as.length; ++i) &#123;<br>            <span class="hljs-keyword">if</span> ((a = as[i]) != <span class="hljs-literal">null</span>)<br>                sum += a.value;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> sum;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><code>Stripped64</code> 的设计核心思路是通过内部的分散计算来避免竞争，以空间换取时间。没有竞争时 <code>cells</code> 数组为 null，这时只使用 <code>base</code>，一旦发生竞争，<code>cells</code> 数组就上场了。</p>
+<p><code>cells</code> 数组第一次初始化长度为2，以后每次扩容都变为原来的两倍，一直到 <code>cells</code> 数组的长度大于等于当前服务器的CPU核数，同一时刻能持有CPU时间片去并发操作同一内存地址的最大线程数最多也就是CPU的核数。</p>
+<p>在存在线程争用的时候，每个线程被映射到 <code>cells[threadLocalRandomProbe&amp;cells.length]</code> 位置的 Cell 元素，该线程对 <code>value</code> 所做的累加操作就执行在对应的 <code>Cell</code> 元素的值上。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/JUC/" class="category-chain-item">JUC</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/JUC/">#JUC</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>原子累加器之LongAdder</div>
+      <div>http://example.com/2023/03/29/原子累加器之LongAdder/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>程序员小魏</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年3月29日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/03/29/%E5%8E%9F%E5%AD%90%E7%B1%BB%E4%B9%8B%E5%AD%97%E6%AE%B5%E6%9B%B4%E6%96%B0%E5%99%A8/" title="原子类之字段更新器">
+                        <span class="hidden-mobile">原子类之字段更新器</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"l6YWrDG6zdbBheC4FYWffssk-MdYXbMMI","appKey":"JGIpLOPqsRK2CsLhfjzvIEtc","path":"window.location.pathname","placeholder":"留言仅限讨论，禁止广告等行为","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://l6ywrdg6.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <div style="font-size: 0.85rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div>
+<div id="music_div" style="position: fixed; bottom: 0px; left: 30px;"> <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=110 src="//music.163.com/outchain/player?type=2&id=1974443814&auto=1&height=90"> </iframe> <script src="https://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script> <script src="/js/musicshow.js"></script> </div> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/love.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/xiaoxingxing.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/xiaoxuehua.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/caidai.js"></script>
+<script src="/js/star.js"></script>
+<script src="/js/renwu.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
