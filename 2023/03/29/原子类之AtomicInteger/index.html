@@ -18,16 +18,16 @@
   <meta name="author" content="程序员小魏">
   <meta name="keywords" content="">
   
-    <meta name="description" content="介绍了CAS相关知识">
+    <meta name="description" content="介绍了原子类之AtomicInteger的特点与使用">
 <meta property="og:type" content="article">
-<meta property="og:title" content="CAS">
-<meta property="og:url" content="http://example.com/2023/03/29/CAS/index.html">
+<meta property="og:title" content="原子类之AtomicInteger">
+<meta property="og:url" content="http://example.com/2023/03/29/%E5%8E%9F%E5%AD%90%E7%B1%BB%E4%B9%8BAtomicInteger/index.html">
 <meta property="og:site_name" content="程序员小魏的后端之旅">
-<meta property="og:description" content="介绍了CAS相关知识">
+<meta property="og:description" content="介绍了原子类之AtomicInteger的特点与使用">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/img/JUC.png">
-<meta property="article:published_time" content="2023-03-29T07:35:32.000Z">
-<meta property="article:modified_time" content="2023-03-29T07:42:58.857Z">
+<meta property="article:published_time" content="2023-03-29T08:28:18.000Z">
+<meta property="article:modified_time" content="2023-03-29T08:31:07.957Z">
 <meta property="article:author" content="程序员小魏">
 <meta property="article:tag" content="JUC">
 <meta name="twitter:card" content="summary_large_image">
@@ -37,7 +37,7 @@
     <meta name="referrer" content="no-referrer-when-downgrade">
   
   
-  <title>CAS - 程序员小魏的后端之旅</title>
+  <title>原子类之AtomicInteger - 程序员小魏的后端之旅</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -277,7 +277,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="CAS"></span>
+            <span id="subtitle" data-typed-text="原子类之AtomicInteger"></span>
           
         </div>
 
@@ -293,8 +293,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2023-03-29 15:35" pubdate>
-           2023 年 03 月 29 日 , 下午 03:35 , 星期三
+        <time datetime="2023-03-29 16:28" pubdate>
+           2023 年 03 月 29 日 , 下午 04:28 , 星期三
         </time>
       </span>
     
@@ -306,7 +306,7 @@
         <i class="iconfont icon-chart"></i>
         
           <!-- compatible with older versions-->
-          3k 字
+          4.2k 字
         
       </span>
     
@@ -317,7 +317,7 @@
         
         
         
-          26 分钟
+          35 分钟
         
       </span>
     
@@ -363,52 +363,91 @@
         <div id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">CAS</h1>
+            <h1 style="display: none">原子类之AtomicInteger</h1>
             
             
               <div class="markdown-body">
                 
-                <h3 id="一、案例分析"><a href="#一、案例分析" class="headerlink" title="一、案例分析"></a>一、案例分析</h3><blockquote>
-<p>在一个银行转账的案例中，100个线程对1000元的账户每个转出账10元，理论上最后账户剩下余额为0元，但是如果不加锁，会出现线程安全问题；</p>
-<p>解决方法：</p>
-<p>1.可以使用sync锁进行加锁操作，但是效率太低；</p>
-<p>2.通过cas无锁优化，接下来具体来讲解一下cas</p>
-</blockquote>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">withdraw</span><span class="hljs-params">(Integer amount)</span> &#123;<br><br>        <span class="hljs-comment">// 需要不断尝试，直到成功为止</span><br>        <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) &#123;<br>            <span class="hljs-comment">// 比如拿到了旧值 1000</span><br>            <span class="hljs-type">int</span> <span class="hljs-variable">prev</span> <span class="hljs-operator">=</span> balance.get();<br>            <span class="hljs-comment">// 在这个基础上 1000-10 = 990</span><br>            <span class="hljs-type">int</span> <span class="hljs-variable">next</span> <span class="hljs-operator">=</span> prev - amount;<br><br>            <span class="hljs-keyword">if</span> (balance.compareAndSet(prev, next)) &#123;<br>                <span class="hljs-keyword">break</span>;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
-
-<p><strong>说明</strong></p>
-<p>compareAndSet 在 set 前，先比较 prev 与当前值,不一致了，next 作废，返回 false 表示失败。</p>
-<p>比如，别的线程已经做了减法，当前值已经被减成了990那么本线程的这次 990 就作废了，进入 while 下次循环重试一致，以 next 设置为新值，返回 true 表示成功。</p>
-<p>其中的关键是 compareAndSet，它的简称就是 CAS （也有 Compare And Swap 的说法），它必须是原子操作。</p>
-<p><img src="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/image-20230329154129427.png" srcset="/img/loading.gif" lazyload alt="image-20230329154129427"></p>
-<p><strong>上述图解</strong></p>
-<p>线程1从 Account 对象中<strong>获取余额100</strong>，并执行 <code>-10</code> 操作，但此时线程2已经将余额修改为 90 了，线程1 执行 <code>compareAndSet(100,90)</code> 方法时，发现自己拿到的最新值 100 与 Account 共享变量上的最新结果 90 对比，发现不一致，因此这次 CAS 操作失败返回 false，再次进入循环。</p>
-<p><strong>核心的思想就是采用不断尝试直至成功的方式来保护共享变量的线程安全。</strong></p>
-<p><strong>注意</strong>:</p>
+                <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>AtomicInteger 类底层存储一个int值，并提供方法对该int值进行原子操作。AtomicInteger 作为<code>java.util.concurrent.atomic</code>包的一部分，从Java 1.5开始引入。</p>
+<p>接下来我们先从三个问题入手，对AtomicInteger概念有一个基本的了解。</p>
+<h3 id="一、概述"><a href="#一、概述" class="headerlink" title="一、概述"></a>一、概述</h3><p><strong>（1）什么是原子操作呢？</strong></p>
+<p>所谓原子操作，就是一个独立且不可分割的操作。AtomicInteger 工具类提供了对整数操作的原子封装。</p>
+<p><strong>（2）为什么要对整数操作进行原子封装呢？</strong></p>
+<p>在 java 中，当我们在多线程情况下，对一个整型变量做加减操作时，如果不加任何的多线程并发控制，大概率会出现线程安全问题，也就是说当多线程同时操作一个整型变量的增减时，会出现运算结果错误的问题。AtomicInteger 工具类就是为了<strong>简化整型变量的同步处理</strong>而诞生的。</p>
+<p><strong>（3）什么场景下需要使用AtomicInteger？</strong></p>
 <ul>
-<li>其实 CAS 的底层是 lock cmpxchg指令（X86 架构），在单核 CPU 和多核 CPU 下都能够保证【比较-交换】的原子性。</li>
-<li>在多核状态下，某个核执行到带lock的指令时，CPU 会让总线锁住，当这个核把此指令执行完毕，再开启总线。这个过程中不会被线程的调度机制所打断，保证了多个线程对内存操作的准确性，是原子的。</li>
+<li>多线程并发场景下操作一个计数器，需要保证计数器操作的原子性。</li>
+<li>进行数值比较，如果给定值与当前值相等，进行数值的更新操作，并实现操作的非阻塞算法。</li>
 </ul>
-<h4 id="慢动作分析"><a href="#慢动作分析" class="headerlink" title="慢动作分析"></a>慢动作分析</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> lombok.extern.slf4j.Slf4j;<br><br><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicInteger;<br><br><span class="hljs-keyword">import</span> <span class="hljs-keyword">static</span> com.lilinchao.thread.utils.Sleeper.sleep;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@author</span> lilinchao</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@date</span> 2022-11-03</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@description</span> 慢动作分析</span><br><span class="hljs-comment"> **/</span><br><span class="hljs-meta">@Slf4j(topic = &quot;c.SlowMotion&quot;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">SlowMotion</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-type">AtomicInteger</span> <span class="hljs-variable">balance</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">AtomicInteger</span>(<span class="hljs-number">10000</span>);<br>        <span class="hljs-type">int</span> <span class="hljs-variable">mainPrev</span> <span class="hljs-operator">=</span> balance.get();<br>        log.debug(<span class="hljs-string">&quot;try get &#123;&#125;&quot;</span>,mainPrev);<br><br>        <span class="hljs-comment">//线程1 修改</span><br>        <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            sleep(<span class="hljs-number">1</span>);<br>            <span class="hljs-type">int</span> <span class="hljs-variable">prev</span> <span class="hljs-operator">=</span> balance.get();<br>            balance.compareAndSet(prev,<span class="hljs-number">9000</span>);<br>            log.debug(balance.toString());<br>        &#125;,<span class="hljs-string">&quot;t1&quot;</span>).start();<br><br>        sleep(<span class="hljs-number">2</span>);<br>        log.debug(<span class="hljs-string">&quot;try set 8000...&quot;</span>);<br><br>        <span class="hljs-comment">//主线程修改</span><br>        <span class="hljs-comment">//此时balance的值已经改为9000,cas失败</span><br>        <span class="hljs-type">boolean</span> <span class="hljs-variable">isSuccess</span> <span class="hljs-operator">=</span> balance.compareAndSet(mainPrev, <span class="hljs-number">8000</span>);<br>        log.debug(<span class="hljs-string">&quot;is success?&#123;&#125;&quot;</span>,isSuccess);<br>        <span class="hljs-keyword">if</span>(!isSuccess) &#123;<br>            <span class="hljs-comment">//AtomicInteger内接收数值的变量用voltile修饰，每次都能获取到最新值</span><br>            mainPrev = balance.get();<span class="hljs-comment">//9000</span><br>            log.debug(<span class="hljs-string">&quot;try set 8000...&quot;</span>);<br>            isSuccess = balance.compareAndSet(mainPrev, <span class="hljs-number">8000</span>);<br>            log.debug(<span class="hljs-string">&quot;is success ? &#123;&#125;&quot;</span>, isSuccess);<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="二、AtomicInteger基础用法"><a href="#二、AtomicInteger基础用法" class="headerlink" title="二、AtomicInteger基础用法"></a>二、AtomicInteger基础用法</h3><p>通过<code>AtomicInteger</code>构造方法，可以创建一个<code>AtomicInteger</code>对象，该对象的初始值默认为0。<code>AtomicInteger</code>提供get和set方法，获取底层int整数值，与设置int整数值。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicInteger;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Created by xiaowei</span><br><span class="hljs-comment"> * Date 2022/11/5</span><br><span class="hljs-comment"> * Description AtomicInteger基本用法</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Test01</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-comment">//首先创建一个AtomicInteger对象</span><br>        <span class="hljs-type">AtomicInteger</span> <span class="hljs-variable">atomicInteger</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">AtomicInteger</span>();<br>        <span class="hljs-comment">//在操作之前先赋值,如果不显示赋值则默认为0,就像 int 型变量使用前做初始化赋值一样。</span><br>        atomicInteger.set(<span class="hljs-number">100</span>);<br><br>        <span class="hljs-comment">// 之后可以调用各种方法进行增减操作</span><br>        <span class="hljs-comment">// 获取当前值</span><br>        System.out.println(atomicInteger.get());<br>        <span class="hljs-comment">// 先获取当前值，之后再对原值加100,返回之前的旧值</span><br>        System.out.println(atomicInteger.getAndAdd(<span class="hljs-number">100</span>));<br>        <span class="hljs-comment">// 先获取当前值，之后再对原值减1,返回旧值</span><br>        System.out.println(atomicInteger.getAndDecrement());<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
 
 <p><strong>运行结果</strong></p>
-<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-number">18</span>:<span class="hljs-number">42</span>:<span class="hljs-number">17.068</span> c.SlowMotion [main] - <span class="hljs-keyword">try</span> <span class="hljs-keyword">get</span> <span class="hljs-number">10000</span><br><span class="hljs-number">18</span>:<span class="hljs-number">42</span>:<span class="hljs-number">18.097</span> c.SlowMotion [t1] - <span class="hljs-number">9000</span><br><span class="hljs-number">18</span>:<span class="hljs-number">42</span>:<span class="hljs-number">19.100</span> c.SlowMotion [main] - <span class="hljs-keyword">try</span> <span class="hljs-keyword">set</span> <span class="hljs-number">8000.</span>..<br><span class="hljs-number">18</span>:<span class="hljs-number">42</span>:<span class="hljs-number">19.100</span> c.SlowMotion [main] - <span class="hljs-keyword">is</span> success?<span class="hljs-literal">false</span><br><span class="hljs-number">18</span>:<span class="hljs-number">42</span>:<span class="hljs-number">19.100</span> c.SlowMotion [main] - <span class="hljs-keyword">try</span> <span class="hljs-keyword">set</span> <span class="hljs-number">8000.</span>..<br><span class="hljs-number">18</span>:<span class="hljs-number">42</span>:<span class="hljs-number">19.100</span> c.SlowMotion [main] - <span class="hljs-keyword">is</span> success ? <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs undefined">100<br>100<br>200<br></code></pre></td></tr></table></figure>
 
-<h3 id="二、volatile"><a href="#二、volatile" class="headerlink" title="二、volatile"></a>二、volatile</h3><p>获取共享变量时，<strong>为了保证该变量的可见性，需要使用 volatile 修饰</strong>。它可以用来修饰成员变量和静态成员变量，可以避免线程从自己的工作缓存中查找变量的值，而是必须到主存中获取它的值，线程操作 volatile 变量都是直接操作主存。即一个线程对 volatile 变量的修改，对另一个线程可见。<br><em>注意：volatile 仅仅保证了共享变量的可见性，让其他线程能够看到最新值，但不能解决指令交错问题（不能保证原子性）</em></p>
-<p>CAS 必须借助 volatile 才能读取到共享变量的最新值来实现【比较并交换】的效果。</p>
-<h4 id="CAS的特点"><a href="#CAS的特点" class="headerlink" title="CAS的特点"></a>CAS的特点</h4><p><strong>结合 CAS 和 volatile 可以实现无锁并发，适用于线程数少、多核 CPU 的场景下。</strong></p>
+<h3 id="三、原子计数器场景"><a href="#三、原子计数器场景" class="headerlink" title="三、原子计数器场景"></a>三、原子计数器场景</h3><p>把<code>AtomicInteger</code>作为一个计数器使用，<code>AtomicInteger</code>提供了若干方法进行加法、减法的原子操作。</p>
+<blockquote>
+<p>比如从一个map里面获取值，用get()方法，这是第一个操作；</p>
+<p>获取到值之后给这个值加上n，这是第二个操作；</p>
+<p>将进行过加法运算的值，再次放入map里面是第三个操作。</p>
+</blockquote>
+<p>所谓操作的原子性是指：在多线程并发的场景下，上面的三个操作是原子性的，也就是不可分割的。</p>
+<p>不会出现A线程get了数值，B线程同时也get到了该数值，两个线程同时为该值做运算并先后再次放入的情况，这种情况对于<code>AtomicInteger</code>而言是不会出现的，<code>AtomicInteger</code>操作是线程安全的、不可分割的。</p>
+<p><strong>AtomicInteger相关方法</strong></p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>addAndGet()</td>
+<td>将给定的值加到当前值上，并在加法后返回新值，并保证操作的原子性。</td>
+</tr>
+<tr>
+<td>getAndAdd()</td>
+<td>将给定的值加到当前值上，并返回旧值，并保证操作的原子性。</td>
+</tr>
+<tr>
+<td>incrementAndGet()</td>
+<td>将当前值增加1，并在增加后返回新值。它相当于<code>++i</code>操作，并保证操作的原子性。</td>
+</tr>
+<tr>
+<td>getAndIncrement()</td>
+<td>将当前值增加1并返回旧值。相当于<code>i++</code>操作，并保证操作的原子性。</td>
+</tr>
+<tr>
+<td>decrementAndGet()</td>
+<td>将当前值减去1，并在减去后返回新值，相当于<code>--i</code>操作，并保证操作的原子性。</td>
+</tr>
+<tr>
+<td>getAndDecrement()</td>
+<td>将当前值减去1，并返回旧值。它相当于 <code>i--</code>操作，并保证操作的原子性。</td>
+</tr>
+</tbody></table>
+<p><strong>使用示例</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicInteger;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Created by xiaowei</span><br><span class="hljs-comment"> * Date 2022/11/5</span><br><span class="hljs-comment"> * Description  AtomicInteger示例操作</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Test02</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-type">AtomicInteger</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">AtomicInteger</span>(<span class="hljs-number">0</span>);<br><br>        <span class="hljs-comment">// 获取并自增（i = 0, 结果 i = 1, 返回 0），类似于 i++</span><br>        System.out.println(i.getAndIncrement());<br><br>        <span class="hljs-comment">// 自增并获取（i = 1, 结果 i = 2, 返回 2），类似于 ++i</span><br>        System.out.println(i.incrementAndGet());<br><br>        <span class="hljs-comment">// 自减并获取（i = 2, 结果 i = 1, 返回 1），类似于 --i</span><br>        System.out.println(i.decrementAndGet());<br><br>        <span class="hljs-comment">// 获取并自减（i = 1, 结果 i = 0, 返回 1），类似于 i--</span><br>        System.out.println(i.getAndDecrement());<br><br>        <span class="hljs-comment">// 获取并加值（i = 0, 结果 i = 5, 返回 0）</span><br>        System.out.println(i.getAndAdd(<span class="hljs-number">5</span>));<br><br>        <span class="hljs-comment">// 加值并获取（i = 5, 结果 i = 0, 返回 0）</span><br>        System.out.println(i.addAndGet(-<span class="hljs-number">5</span>));<br><br>        <span class="hljs-comment">// 获取并更新（i = 0, p 为 i 的当前值, 结果 i = -2, 返回 0）</span><br>        <span class="hljs-comment">// 其中函数中的操作能保证原子，但函数需要无副作用</span><br>        System.out.println(i.getAndUpdate(p -&gt; p - <span class="hljs-number">2</span>));<br><br>        <span class="hljs-comment">// 更新并获取（i = -2, p 为 i 的当前值, 结果 i = 0, 返回 0）</span><br>        <span class="hljs-comment">// 其中函数中的操作能保证原子，但函数需要无副作用</span><br>        System.out.println(i.updateAndGet(p -&gt; p + <span class="hljs-number">2</span>));<br><br>        <span class="hljs-comment">// 获取并计算（i = 0, p 为 i 的当前值, x 为参数1, 结果 i = 10, 返回 0）</span><br>        <span class="hljs-comment">// 其中函数中的操作能保证原子，但函数需要无副作用</span><br>        <span class="hljs-comment">// getAndUpdate 如果在 lambda 中引用了外部的局部变量，要保证该局部变量是 final 的</span><br>        <span class="hljs-comment">// getAndAccumulate 可以通过 参数1 来引用外部的局部变量，但因为其不在 lambda 中因此不必是 final</span><br>        System.out.println(i.getAndAccumulate(<span class="hljs-number">10</span>, (p, x) -&gt; p + x));<br><br>        <span class="hljs-comment">// 计算并获取（i = 10, p 为 i 的当前值, x 为参数1, 结果 i = 0, 返回 0）</span><br>        <span class="hljs-comment">// 其中函数中的操作能保证原子，但函数需要无副作用</span><br>        System.out.println(i.accumulateAndGet(-<span class="hljs-number">10</span>, (p, x) -&gt; p + x));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h3 id="四、数值比对及交换操作"><a href="#四、数值比对及交换操作" class="headerlink" title="四、数值比对及交换操作"></a>四、数值比对及交换操作</h3><p>compareAndSet操作将一个内存位置的内容与一个给定的值进行比较，只有当它们相同时，才会将该内存位置的内容修改为一个给定的新值。这个过程是以单个原子操作的方式完成的。</p>
+<p><strong>语法</strong></p>
 <ul>
-<li>CAS 是基于乐观锁的思想：最乐观的估计，不怕别的线程来修改共享变量，就算改了也没关系，我吃亏点再重试呗。</li>
-<li>synchronized 是基于悲观锁的思想：最悲观的估计，得防着其它线程来修改共享变量，我上了锁你们都别想改，我改完了解开锁，你们才有机会。</li>
-<li>CAS 体现的是无锁并发、无阻塞并发，因为没有使用 synchronized，所以线程不会陷入阻塞，这是效率提升的因素之一，但如果竞争激烈，可以想到重试必然频繁发生，反而效率会受影响。</li>
+<li><strong>compareAndSet方法</strong>：如果<code>当前值==预期值</code>，则将值设置为给定的更新值。</li>
 </ul>
-<h3 id="三、为什么无锁效率高"><a href="#三、为什么无锁效率高" class="headerlink" title="三、为什么无锁效率高"></a>三、为什么无锁效率高</h3><ul>
-<li><p>无锁情况下，即使重试失败，线程始终在高速运行，没有停歇，而synchronized 会让线程在没有获得锁的时候，发生上下文切换，进入阻塞。</p>
-<p>打个比喻线程就好像高速跑道上的赛车，高速运行时，速度超快，一旦发生上下文切换，就好比赛车要减速、熄火，等被唤醒又得重新打火、启动、加速… 恢复到高速运行，代价比较大。</p>
-</li>
-<li><p>但无锁情况下，因为线程要保持运行，需要额外 CPU 的支持，CPU 在这里就好比高速跑道，没有额外的跑道，线程想高速运行也无从谈起，虽然不会进入阻塞，但由于没有分到时间片，仍然会进入可运行状态，还是会导致上下文切换。</p>
-</li>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-type">boolean</span> <span class="hljs-title function_">compareAndSet</span><span class="hljs-params">(<span class="hljs-type">int</span> expect, <span class="hljs-type">int</span> update)</span><br></code></pre></td></tr></table></figure>
+
+<ul>
+<li><code>expect</code>是预期值</li>
+<li><code>update</code>是更新值</li>
 </ul>
+<p><strong>示例</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicInteger;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Created by xiaowei</span><br><span class="hljs-comment"> * Date 2022/11/5</span><br><span class="hljs-comment"> * Description  compareAndSet() 方法示例</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Test03</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-comment">//初始值为100的atomic Integer</span><br>        <span class="hljs-type">AtomicInteger</span> <span class="hljs-variable">atomicInteger</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">AtomicInteger</span>(<span class="hljs-number">100</span>);<br><br>        <span class="hljs-comment">//当前值100 = 预期值100，所以设置atomicInteger=110</span><br>        <span class="hljs-type">boolean</span> <span class="hljs-variable">isSuccess</span> <span class="hljs-operator">=</span> atomicInteger.compareAndSet(<span class="hljs-number">100</span>,<span class="hljs-number">110</span>);<br>        System.out.println(isSuccess);      <span class="hljs-comment">//输出结果为true表示操作成功</span><br><br>        <span class="hljs-comment">//当前值110 = 预期值100? 不相等，所以atomicInteger仍然等于110</span><br>        isSuccess = atomicInteger.compareAndSet(<span class="hljs-number">100</span>,<span class="hljs-number">120</span>);<br>        System.out.println(isSuccess);      <span class="hljs-comment">//输出结果为false表示操作失败</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>运行结果</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-literal">true</span><br><span class="hljs-literal">false</span><br></code></pre></td></tr></table></figure>
+
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p><code>AtomicInteger</code>可以帮助我们在不使用synchronized同步锁的情况下，实现在多线程场景下int数值操作的线程安全，操作的原子性。并且使用<code>AtomicInteger</code>来实现int数值的原子操作，远比使用synchronized同步锁效率更高。</p>
+<p><code>java.util.concurrent.atomic</code>包不仅提供了<code>AtomicInteger</code>，还提供了AtomicBoolean布尔原子操作类、AtomicLong长整型布尔原子操作类、AtomicReference对象原子操作类、AtomicIntegerArray整型数组原子操作类、AtomicLongArray长整型数组原子操作类、AtomicReferenceArray对象数组原子操作类。</p>
 
                 
               </div>
@@ -454,8 +493,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>CAS</div>
-      <div>http://example.com/2023/03/29/CAS/</div>
+      <div>原子类之AtomicInteger</div>
+      <div>http://example.com/2023/03/29/原子类之AtomicInteger/</div>
     </div>
     <div class="license-meta">
       
@@ -499,9 +538,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2023/03/29/%E5%8E%9F%E5%AD%90%E7%B1%BB%E4%B9%8BAtomicInteger/" title="原子类之AtomicInteger">
+                      <a href="/2023/03/29/%E5%8E%9F%E5%AD%90%E7%B1%BB%E4%B9%8B%E5%8E%9F%E5%AD%90%E5%BC%95%E7%94%A8/" title="原子类之原子引用">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">原子类之AtomicInteger</span>
+                        <span class="hidden-mobile">原子类之原子引用</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -509,8 +548,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2023/03/29/happens-before%E8%A7%84%E5%88%99/" title="happens-before规则">
-                        <span class="hidden-mobile">happens-before规则</span>
+                      <a href="/2023/03/29/CAS/" title="CAS">
+                        <span class="hidden-mobile">CAS</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

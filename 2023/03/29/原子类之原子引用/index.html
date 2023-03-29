@@ -1,0 +1,879 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/tree.png">
+  <link rel="icon" href="/img/xiaowei.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="程序员小魏">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="介绍了原子类之原子引用的使用">
+<meta property="og:type" content="article">
+<meta property="og:title" content="原子类之原子引用">
+<meta property="og:url" content="http://example.com/2023/03/29/%E5%8E%9F%E5%AD%90%E7%B1%BB%E4%B9%8B%E5%8E%9F%E5%AD%90%E5%BC%95%E7%94%A8/index.html">
+<meta property="og:site_name" content="程序员小魏的后端之旅">
+<meta property="og:description" content="介绍了原子类之原子引用的使用">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/JUC.png">
+<meta property="article:published_time" content="2023-03-29T08:32:32.000Z">
+<meta property="article:modified_time" content="2023-03-29T08:35:54.133Z">
+<meta property="article:author" content="程序员小魏">
+<meta property="article:tag" content="JUC">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/img/JUC.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>原子类之原子引用 - 程序员小魏的后端之旅</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_3846514_kabxni94auf.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/bynotes/texiao/source/css/shubiao.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/bynotes/texiao/source/css/gundongtiao.css">
+<link rel="stylesheet" href="/css/mac.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":true,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>程序员小魏的后端之旅</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives">
+                <i class="iconfont icon-books"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories">
+                <i class="iconfont icon-th-large"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-book"></i>
+                <span>文档</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/">
+                    
+                    <span>主题博客</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/guide/">
+                    
+                    <span>配置指南</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/icon/">
+                    
+                    <span>图标用法</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="原子类之原子引用"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        程序员小魏
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-03-29 16:32" pubdate>
+           2023 年 03 月 29 日 , 下午 04:32 , 星期三
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          10k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          84 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">原子类之原子引用</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h3 id="一、概述"><a href="#一、概述" class="headerlink" title="一、概述"></a>一、概述</h3><p><strong>为什么需要原子引用类型？</strong></p>
+<p>保证引用类型的共享变量是线程安全的。</p>
+<p>基本类型原子类只能更新一个变量，如果需要原子更新多个变量，需要使用引用类型原子类。</p>
+<ul>
+<li><p><code>AtomicReference</code>：引用类型原子类；</p>
+</li>
+<li><p><code>AtomicStampedRerence</code>：原子更新带有版本号的引用类型；</p>
+<p>该类将整数值与引用关联起来，可用于解决原子的更新数据和数据的版本号，可以解决使用 CAS 进行原子更新时可能出现的 ABA 问题。</p>
+</li>
+<li><p><code>AtomicMarkableReference</code> ：原子更新带有标记的引用类型。</p>
+<p>该类将 boolean 标记与引用关联起来，也可以解决使用 CAS 进行原子更新时可能出现的 ABA 问题。</p>
+</li>
+</ul>
+<h3 id="二、取款示例"><a href="#二、取款示例" class="headerlink" title="二、取款示例"></a>二、取款示例</h3><blockquote>
+<p>先做一个不使用 <strong>AtomicReference</strong> 取款的不安全实现</p>
+</blockquote>
+<ul>
+<li><strong>取款案例</strong></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> java.math.BigDecimal;<br><span class="hljs-keyword">import</span> java.util.ArrayList;<br><span class="hljs-keyword">import</span> java.util.List;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Created by xiaowei</span><br><span class="hljs-comment"> * Date 2022/11/5</span><br><span class="hljs-comment"> * Description 取款案例</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">interface</span> <span class="hljs-title class_">DecimalAccount</span> &#123;<br><br>    <span class="hljs-comment">// 获取余额</span><br>    BigDecimal <span class="hljs-title function_">getBalance</span><span class="hljs-params">()</span>;<br><br>    <span class="hljs-comment">//取款</span><br>    <span class="hljs-keyword">void</span> <span class="hljs-title function_">withdraw</span><span class="hljs-params">(BigDecimal amount)</span>;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * 方法内会启动 1000 个线程，每个线程做 -10 元 的操作</span><br><span class="hljs-comment">     * 如果初始余额为 10000 那么正确的结果应当是 0</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">demo</span><span class="hljs-params">(DecimalAccount account)</span>&#123;<br>        List&lt;Thread&gt; threadList = <span class="hljs-keyword">new</span> <span class="hljs-title class_">ArrayList</span>&lt;&gt;();<br><br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> <span class="hljs-variable">i</span> <span class="hljs-operator">=</span> <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">1000</span>; i++)&#123;<br>            threadList.add(<span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>                account.withdraw(BigDecimal.TEN);<br>            &#125;));<br>        &#125;<br>        threadList.forEach(Thread::start);<br>        threadList.forEach(t -&gt; &#123;<br>            <span class="hljs-keyword">try</span> &#123;<br>                t.join();<br>            &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>                e.printStackTrace();<br>            &#125;<br>        &#125;);<br>        System.out.println(account.getBalance());<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="不安全实现"><a href="#不安全实现" class="headerlink" title="不安全实现"></a>不安全实现</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> java.math.BigDecimal;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Created by xiaowei</span><br><span class="hljs-comment"> * Date 2022/11/5</span><br><span class="hljs-comment"> * Description 不安全实现</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Test04</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        DecimalAccount.demo(<span class="hljs-keyword">new</span> <span class="hljs-title class_">DecimalAccountUnsafe</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">BigDecimal</span>(<span class="hljs-string">&quot;10000&quot;</span>)));<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">DecimalAccountUnsafe</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">DecimalAccount</span>&#123;<br>    BigDecimal balance;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">DecimalAccountUnsafe</span><span class="hljs-params">(BigDecimal balance)</span>&#123;<br>        <span class="hljs-built_in">this</span>.balance = balance;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> BigDecimal <span class="hljs-title function_">getBalance</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> balance;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">withdraw</span><span class="hljs-params">(BigDecimal amount)</span> &#123;<br>        <span class="hljs-type">BigDecimal</span> <span class="hljs-variable">balance</span> <span class="hljs-operator">=</span> <span class="hljs-built_in">this</span>.getBalance();<br>        <span class="hljs-comment">// 减法</span><br>        <span class="hljs-built_in">this</span>.balance = balance.subtract(amount);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>运行结果</strong></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-number">3850</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="安全实现-加锁"><a href="#安全实现-加锁" class="headerlink" title="安全实现-加锁"></a>安全实现-加锁</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> java.math.BigDecimal;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Created by xiaowei</span><br><span class="hljs-comment"> * Date 2022/11/5</span><br><span class="hljs-comment"> * Description 安全实现-加锁</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Test05</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        DecimalAccount.demo(<span class="hljs-keyword">new</span> <span class="hljs-title class_">DecimalAccountSafeLock</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">BigDecimal</span>(<span class="hljs-string">&quot;10000&quot;</span>)));<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">DecimalAccountSafeLock</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">DecimalAccount</span> &#123;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Object</span> <span class="hljs-variable">lock</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Object</span>();<br>    BigDecimal balance;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">DecimalAccountSafeLock</span><span class="hljs-params">(BigDecimal balance)</span>&#123;<br>        <span class="hljs-built_in">this</span>.balance = balance;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> BigDecimal <span class="hljs-title function_">getBalance</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> balance;<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">withdraw</span><span class="hljs-params">(BigDecimal amount)</span> &#123;<br>        <span class="hljs-keyword">synchronized</span> (lock) &#123;<br>            <span class="hljs-type">BigDecimal</span> <span class="hljs-variable">balance</span> <span class="hljs-operator">=</span> <span class="hljs-built_in">this</span>.getBalance();<br>            <span class="hljs-built_in">this</span>.balance = balance.subtract(amount);<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>运行结果</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs undefined">0<br></code></pre></td></tr></table></figure>
+
+<h4 id="安全实现-CAS"><a href="#安全实现-CAS" class="headerlink" title="安全实现-CAS"></a>安全实现-CAS</h4><p>在<code>AtomicReference</code>类中，存在一个value类型的变量，保存对<code>BigDecimal</code>对象的引用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> java.math.BigDecimal;<br><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicReference;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Created by xiaowei</span><br><span class="hljs-comment"> * Date 2022/11/6</span><br><span class="hljs-comment"> * Description 安全实现-CAS</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Test06</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        DecimalAccount.demo(<span class="hljs-keyword">new</span> <span class="hljs-title class_">DecimalAccountSafeCas</span>(<span class="hljs-keyword">new</span> <span class="hljs-title class_">BigDecimal</span>(<span class="hljs-string">&quot;10000&quot;</span>)));<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">DecimalAccountSafeCas</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">DecimalAccount</span> &#123;<br><br>    AtomicReference&lt;BigDecimal&gt; reference;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">DecimalAccountSafeCas</span><span class="hljs-params">(BigDecimal balance)</span> &#123;<br>        reference = <span class="hljs-keyword">new</span> <span class="hljs-title class_">AtomicReference</span>&lt;&gt;(balance);<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> BigDecimal <span class="hljs-title function_">getBalance</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> reference.get();<br>    &#125;<br><br>    <span class="hljs-meta">@Override</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">withdraw</span><span class="hljs-params">(BigDecimal amount)</span> &#123;<br>        <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) &#123;<br>            <span class="hljs-type">BigDecimal</span> <span class="hljs-variable">prev</span> <span class="hljs-operator">=</span> reference.get();<br>            <span class="hljs-comment">// 注意：这里的balance返回的是一个新的对象，即 pre!=next</span><br>            <span class="hljs-type">BigDecimal</span> <span class="hljs-variable">next</span> <span class="hljs-operator">=</span> prev.subtract(amount);<br>            <span class="hljs-keyword">if</span> (reference.compareAndSet(prev,next)) &#123;<br>                <span class="hljs-keyword">break</span>;<br>            &#125;<br>        &#125;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>运行结果</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs undefined">0<br></code></pre></td></tr></table></figure>
+
+<h3 id="三、ABA-问题"><a href="#三、ABA-问题" class="headerlink" title="三、ABA 问题"></a>三、ABA 问题</h3><h4 id="3-1-概述"><a href="#3-1-概述" class="headerlink" title="3.1 概述"></a>3.1 概述</h4><p>因为CAS需要在操作值的时候检查下值有没有发生变化，如果没有发生变化则更新，但是如果一个值原来是A，变成了B，又变成了A，那么使用CAS进行检查时会发现它的值没有发生变化，但是实际上却变化了。</p>
+<h4 id="3-2-示例"><a href="#3-2-示例" class="headerlink" title="3.2 示例"></a>3.2 示例</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicReference;<br><br><span class="hljs-keyword">import</span> <span class="hljs-keyword">static</span> site.weiyikai.concurrent.utils.Sleeper.sleep;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Created by xiaowei</span><br><span class="hljs-comment"> * Date 2022/11/6</span><br><span class="hljs-comment"> * Description ABA问题</span><br><span class="hljs-comment"> */</span><br><span class="hljs-meta">@Slf4j(topic = &quot;c.Test07&quot;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Test07</span> &#123;<br>    <span class="hljs-keyword">static</span> AtomicReference&lt;String&gt; reference = <span class="hljs-keyword">new</span> <span class="hljs-title class_">AtomicReference</span>&lt;&gt;(<span class="hljs-string">&quot;A&quot;</span>);<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        log.debug(<span class="hljs-string">&quot;main start...&quot;</span>);<br>        <span class="hljs-comment">//获取值A</span><br>        <span class="hljs-comment">//这个共享变量被其它线程修改过?</span><br>        <span class="hljs-type">String</span> <span class="hljs-variable">prev</span> <span class="hljs-operator">=</span> reference.get();<br>        other();<br>        sleep(<span class="hljs-number">1</span>);<br>        <span class="hljs-comment">//尝试改为C</span><br>        log.debug(<span class="hljs-string">&quot;change A -&gt; C &#123;&#125;&quot;</span>,reference.compareAndSet(prev,<span class="hljs-string">&quot;C&quot;</span>));<br>    &#125;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">other</span><span class="hljs-params">()</span>&#123;<br>        <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            log.debug(<span class="hljs-string">&quot;change A -&gt; B &#123;&#125;&quot;</span>,reference.compareAndSet(reference.get(),<span class="hljs-string">&quot;B&quot;</span>));<br>        &#125;,<span class="hljs-string">&quot;t1&quot;</span>).start();<br><br>        sleep(<span class="hljs-number">0.5</span>);<br><br>        <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            log.debug(<span class="hljs-string">&quot;change B -&gt; A &#123;&#125;&quot;</span>,reference.compareAndSet(reference.get(),<span class="hljs-string">&quot;A&quot;</span>));<br>        &#125;,<span class="hljs-string">&quot;t2&quot;</span>).start();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>运行结果</strong></p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs rust"><span class="hljs-number">16</span>:<span class="hljs-number">04</span>:<span class="hljs-number">35.527</span> [main] DEBUG c.Test07 - main start...<br><span class="hljs-number">16</span>:<span class="hljs-number">04</span>:<span class="hljs-number">35.582</span> [t1] DEBUG c.Test07 - change A <span class="hljs-punctuation">-&gt;</span> B <span class="hljs-literal">true</span><br><span class="hljs-number">16</span>:<span class="hljs-number">04</span>:<span class="hljs-number">36.084</span> [t2] DEBUG c.Test07 - change B <span class="hljs-punctuation">-&gt;</span> A <span class="hljs-literal">true</span><br><span class="hljs-number">16</span>:<span class="hljs-number">04</span>:<span class="hljs-number">37.084</span> [main] DEBUG c.Test07 - change A <span class="hljs-punctuation">-&gt;</span> C <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+
+<p>主线程仅能判断出共享变量的值与最初值 A 是否相同，不能感知到这种从 A 改为 B 又改回 A 的情况。</p>
+<p>如果主线程希望, 只要有其它线程变动过共享变量，那么自己的 cas 就算失败，这时，需要再加一个版本号。</p>
+<h3 id="四、ABA问题解决"><a href="#四、ABA问题解决" class="headerlink" title="四、ABA问题解决"></a>四、ABA问题解决</h3><h4 id="4-1-AtomicStampedReference"><a href="#4-1-AtomicStampedReference" class="headerlink" title="4.1 AtomicStampedReference"></a>4.1 AtomicStampedReference</h4><p>Java提供了<code>AtomicStampedReference</code>来解决。<code>AtomicStampedReference</code>通过包装<code>[E,Integer]</code>的元组来对对象标记版本戳stamp，从而避免ABA问题。</p>
+<p>AtomicStampedReference的compareAndSet()方法定义如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">compareAndSet</span><span class="hljs-params">(V   expectedReference,</span><br><span class="hljs-params">                             V   newReference,</span><br><span class="hljs-params">                             <span class="hljs-type">int</span> expectedStamp,</span><br><span class="hljs-params">                             <span class="hljs-type">int</span> newStamp)</span> &#123;<br>    Pair&lt;V&gt; current = pair;<br>    <span class="hljs-keyword">return</span><br>        expectedReference == current.reference &amp;&amp;<br>        expectedStamp == current.stamp &amp;&amp;<br>        ((newReference == current.reference &amp;&amp;<br>          newStamp == current.stamp) ||<br>         casPair(current, Pair.of(newReference, newStamp)));<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>参数说明</strong></p>
+<ul>
+<li>expectedReference：预期引用；</li>
+<li>newReference：更新后的引用；</li>
+<li>expectedStamp：预期标志；</li>
+<li>newStamp：更新后的标志。</li>
+</ul>
+<p>如果更新后的引用和标志和当前的引用和标志相等则直接返回true，否则通过Pair生成一个新的pair对象与当前pair CAS替换。</p>
+<p>Pair为<code>AtomicStampedReference</code>的内部类，主要用于记录引用和版本戳信息（标识），定义如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Pair</span>&lt;T&gt; &#123;<br>    <span class="hljs-keyword">final</span> T reference;<br>    <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> stamp;<br>    <span class="hljs-keyword">private</span> <span class="hljs-title function_">Pair</span><span class="hljs-params">(T reference, <span class="hljs-type">int</span> stamp)</span> &#123;<br>        <span class="hljs-built_in">this</span>.reference = reference;<br>        <span class="hljs-built_in">this</span>.stamp = stamp;<br>    &#125;<br>    <span class="hljs-keyword">static</span> &lt;T&gt; Pair&lt;T&gt; <span class="hljs-title function_">of</span><span class="hljs-params">(T reference, <span class="hljs-type">int</span> stamp)</span> &#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Pair</span>&lt;T&gt;(reference, stamp);<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">private</span> <span class="hljs-keyword">volatile</span> Pair&lt;V&gt; pair;<br></code></pre></td></tr></table></figure>
+
+<p>Pair记录着对象的引用和版本戳，版本戳为int型，保持自增。</p>
+<p>同时Pair是一个不可变对象，其所有属性全部定义为final，对外提供一个of方法，该方法返回一个新建的Pari对象。pair对象定义为volatile，保证多线程环境下的可见性。在<code>AtomicStampedReference</code>中，大多方法都是通过调用Pair的of方法来产生一个新的Pair对象，然后赋值给变量pair。</p>
+<p><strong>如set方法：</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">set</span><span class="hljs-params">(V newReference, <span class="hljs-type">int</span> newStamp)</span> &#123;<br>    Pair&lt;V&gt; current = pair;<br>    <span class="hljs-keyword">if</span> (newReference != current.reference || newStamp != current.stamp)<br>        <span class="hljs-built_in">this</span>.pair = Pair.of(newReference, newStamp);<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<h4 id="4-2-使用AtomicStampedReference解决ABA问题"><a href="#4-2-使用AtomicStampedReference解决ABA问题" class="headerlink" title="4.2 使用AtomicStampedReference解决ABA问题"></a>4.2 使用AtomicStampedReference解决ABA问题</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> lombok.extern.slf4j.Slf4j;<br><br><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicStampedReference;<br><br><span class="hljs-keyword">import</span> <span class="hljs-keyword">static</span> site.weiyikai.concurrent.utils.Sleeper.sleep;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Created by xiaowei</span><br><span class="hljs-comment"> * Date 2022/11/6</span><br><span class="hljs-comment"> * Description AtomicStampedReference</span><br><span class="hljs-comment"> */</span><br><span class="hljs-meta">@Slf4j(topic = &quot;c.Test08&quot;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Test08</span> &#123;<br>    <span class="hljs-keyword">static</span> AtomicStampedReference&lt;String&gt;  reference = <span class="hljs-keyword">new</span> <span class="hljs-title class_">AtomicStampedReference</span>&lt;&gt;(<span class="hljs-string">&quot;A&quot;</span>,<span class="hljs-number">0</span>);<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        log.debug(<span class="hljs-string">&quot;main start...&quot;</span>);<br>        <span class="hljs-comment">//获取值 A</span><br>        <span class="hljs-type">String</span> <span class="hljs-variable">prev</span> <span class="hljs-operator">=</span> reference.getReference();<br>        <span class="hljs-comment">// 获取版本号</span><br>        <span class="hljs-type">int</span> <span class="hljs-variable">stamp</span> <span class="hljs-operator">=</span> reference.getStamp();<br>        log.debug(<span class="hljs-string">&quot;版本&#123;&#125;&quot;</span>,stamp);<br>        <span class="hljs-comment">// 如果中间有其它线程干扰,发生了ABA现象</span><br>        other();<br>        sleep(<span class="hljs-number">1</span>);<br>        <span class="hljs-comment">// 尝试改为 C</span><br>        log.debug(<span class="hljs-string">&quot;change A-&gt;C &#123;&#125;&quot;</span>, reference.compareAndSet(prev, <span class="hljs-string">&quot;C&quot;</span>, stamp, stamp + <span class="hljs-number">1</span>));<br>    &#125;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">other</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            log.debug(<span class="hljs-string">&quot;change A-&gt;B &#123;&#125;&quot;</span>, reference.compareAndSet(reference.getReference(), <span class="hljs-string">&quot;B&quot;</span>, reference.getStamp(), reference.getStamp() + <span class="hljs-number">1</span>));<br>            log.debug(<span class="hljs-string">&quot;更新版本为 &#123;&#125;&quot;</span>, reference.getStamp());<br>        &#125;,<span class="hljs-string">&quot;t1&quot;</span>).start();<br>        sleep(<span class="hljs-number">0.5</span>);<br>        <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            log.debug(<span class="hljs-string">&quot;change B-&gt;A &#123;&#125;&quot;</span>, reference.compareAndSet(reference.getReference(), <span class="hljs-string">&quot;A&quot;</span>, reference.getStamp(), reference.getStamp() + <span class="hljs-number">1</span>));<br>            log.debug(<span class="hljs-string">&quot;更新版本为 &#123;&#125;&quot;</span>, reference.getStamp());<br>        &#125;, <span class="hljs-string">&quot;t2&quot;</span>).start();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>运行结果</strong></p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs makefile"><span class="hljs-section">16:36:35.347 [main] DEBUG c.Test08 - main start...</span><br><span class="hljs-section">16:36:35.349 [main] DEBUG c.Test08 - 版本0</span><br><span class="hljs-section">16:36:35.403 [t1] DEBUG c.Test08 - change A-&gt;B true</span><br><span class="hljs-section">16:36:35.404 [t1] DEBUG c.Test08 - 更新版本为 1</span><br><span class="hljs-section">16:36:35.905 [t2] DEBUG c.Test08 - change B-&gt;A true</span><br><span class="hljs-section">16:36:35.905 [t2] DEBUG c.Test08 - 更新版本为 2</span><br><span class="hljs-section">16:36:36.905 [main] DEBUG c.Test08 - change A-&gt;C false</span><br></code></pre></td></tr></table></figure>
+
+<p><strong>分析</strong></p>
+<p>main线程最初的版本号是0，main线程在修改值之前，已经被其他线程修改了2个版本，等到main线程修改时发现版本号不一致了，所以修改值失败。</p>
+<p><strong>AtomicStampedReference</strong> 可以给原子引用加上版本号，追踪原子引用整个的变化过程，如： <strong>A -&gt; B -&gt; A -&gt; C</strong> ，通过<strong>AtomicStampedReference</strong>，我们可以知道，引用变量中途被更改了几次。</p>
+<h4 id="4-3-AtomicMarkableReference解决ABA问题"><a href="#4-3-AtomicMarkableReference解决ABA问题" class="headerlink" title="4.3 AtomicMarkableReference解决ABA问题"></a>4.3 AtomicMarkableReference解决ABA问题</h4><p>有时候，并不关心引用变量更改了几次，只是单纯的关心<strong>是否更改过</strong>，所以就有了 <code>AtomicMarkableReference</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">import</span> lombok.extern.slf4j.Slf4j;<br><br><span class="hljs-keyword">import</span> java.util.concurrent.atomic.AtomicMarkableReference;<br><br><span class="hljs-keyword">import</span> <span class="hljs-keyword">static</span> site.weiyikai.concurrent.utils.Sleeper.sleep;<br><br><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Created by xiaowei</span><br><span class="hljs-comment"> * Date 2022/11/6</span><br><span class="hljs-comment"> * Description AtomicMarkableReference解决ABA问题</span><br><span class="hljs-comment"> */</span><br><span class="hljs-meta">@Slf4j(topic = &quot;c.TestAtomicMarkableReference&quot;)</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">TestAtomicMarkableReference</span> &#123;<br>    <span class="hljs-keyword">static</span> AtomicMarkableReference&lt;String&gt; ref = <span class="hljs-keyword">new</span> <span class="hljs-title class_">AtomicMarkableReference</span>&lt;&gt;(<span class="hljs-string">&quot;A&quot;</span>, <span class="hljs-literal">false</span>);<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span>&#123;<br>        log.debug(<span class="hljs-string">&quot;main start...&quot;</span>);<br>        <span class="hljs-comment">// 获取值 A</span><br>        <span class="hljs-type">String</span> <span class="hljs-variable">prev</span> <span class="hljs-operator">=</span> ref.getReference();<br>        log.debug(<span class="hljs-string">&quot;是否被改过 &#123;&#125;&quot;</span>, ref.isMarked());<br>        <span class="hljs-comment">// 如果中间有其它线程干扰，发生了 ABA 现象</span><br>        other();<br>        sleep(<span class="hljs-number">1</span>);<br>        <span class="hljs-comment">// 尝试改为 C</span><br>        log.debug(<span class="hljs-string">&quot;能否 change A-&gt;C &#123;&#125;&quot;</span>, ref.compareAndSet(prev, <span class="hljs-string">&quot;C&quot;</span>, <span class="hljs-literal">false</span>, <span class="hljs-literal">true</span>));<br>    &#125;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">other</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(() -&gt; &#123;<br>            log.debug(<span class="hljs-string">&quot;change A-&gt;B &#123;&#125;&quot;</span>, ref.compareAndSet(ref.getReference(), <span class="hljs-string">&quot;B&quot;</span>, <span class="hljs-literal">false</span>, <span class="hljs-literal">true</span>));<br>            log.debug(<span class="hljs-string">&quot;修改A-&gt;B &#123;&#125;&quot;</span>, ref.isMarked());<br>            log.debug(<span class="hljs-string">&quot;change B-&gt;A &#123;&#125;&quot;</span>, ref.compareAndSet(ref.getReference(), <span class="hljs-string">&quot;A&quot;</span>, <span class="hljs-literal">true</span>, <span class="hljs-literal">true</span>));<br>            log.debug(<span class="hljs-string">&quot;修改B-&gt;A &#123;&#125;&quot;</span>, ref.isMarked());<br>        &#125;, <span class="hljs-string">&quot;t1&quot;</span>).start();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p><strong>运行结果</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs php"><span class="hljs-number">16</span>:<span class="hljs-number">40</span>:<span class="hljs-number">25.278</span> [main] DEBUG c.TestAtomicMarkableReference - main start...<br><span class="hljs-number">16</span>:<span class="hljs-number">40</span>:<span class="hljs-number">25.280</span> [main] DEBUG c.TestAtomicMarkableReference - 是否被改过 <span class="hljs-literal">false</span><br><span class="hljs-number">16</span>:<span class="hljs-number">40</span>:<span class="hljs-number">25.336</span> [t1] DEBUG c.TestAtomicMarkableReference - change A-&gt;B <span class="hljs-literal">true</span><br><span class="hljs-number">16</span>:<span class="hljs-number">40</span>:<span class="hljs-number">25.337</span> [t1] DEBUG c.TestAtomicMarkableReference - 修改A-&gt;B <span class="hljs-literal">true</span><br><span class="hljs-number">16</span>:<span class="hljs-number">40</span>:<span class="hljs-number">25.337</span> [t1] DEBUG c.TestAtomicMarkableReference - change B-&gt;A <span class="hljs-literal">true</span><br><span class="hljs-number">16</span>:<span class="hljs-number">40</span>:<span class="hljs-number">25.337</span> [t1] DEBUG c.TestAtomicMarkableReference - 修改B-&gt;A <span class="hljs-literal">true</span><br><span class="hljs-number">16</span>:<span class="hljs-number">40</span>:<span class="hljs-number">26.337</span> [main] DEBUG c.TestAtomicMarkableReference - 能否 change A-&gt;C <span class="hljs-literal">false</span><br></code></pre></td></tr></table></figure>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/JUC/" class="category-chain-item">JUC</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/JUC/">#JUC</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>原子类之原子引用</div>
+      <div>http://example.com/2023/03/29/原子类之原子引用/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>程序员小魏</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年3月29日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/03/29/%E5%8E%9F%E5%AD%90%E7%B1%BB%E4%B9%8BAtomicInteger/" title="原子类之AtomicInteger">
+                        <span class="hidden-mobile">原子类之AtomicInteger</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"l6YWrDG6zdbBheC4FYWffssk-MdYXbMMI","appKey":"JGIpLOPqsRK2CsLhfjzvIEtc","path":"window.location.pathname","placeholder":"留言仅限讨论，禁止广告等行为","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://l6ywrdg6.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <div style="font-size: 0.85rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div>
+<div id="music_div" style="position: fixed; bottom: 0px; left: 30px;"> <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=110 src="//music.163.com/outchain/player?type=2&id=1974443814&auto=1&height=90"> </iframe> <script src="https://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script> <script src="/js/musicshow.js"></script> </div> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/love.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/xiaoxingxing.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/xiaoxuehua.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/caidai.js"></script>
+<script src="/js/star.js"></script>
+<script src="/js/renwu.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
