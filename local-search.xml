@@ -4,6 +4,31 @@
   
   
   <entry>
+    <title>Fork&amp;Join框架介绍</title>
+    <link href="/2023/03/30/Fork-Join%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/"/>
+    <url>/2023/03/30/Fork-Join%E6%A1%86%E6%9E%B6%E4%BB%8B%E7%BB%8D/</url>
+    
+    <content type="html"><![CDATA[<h3 id="一、概述"><a href="#一、概述" class="headerlink" title="一、概述"></a>一、概述</h3><p>Fork&#x2F;Join 是 JDK 1.7 加入的新的线程池实现，它体现的是一种分治思想，适用于能够进行任务拆分的<strong>CPU密集型运算</strong>。</p><ul><li>所谓的<strong>任务拆分，是将一个大任务拆分为算法上相同的小任务，直至不能拆分可以直接求解</strong>。跟递归相关的一些计算，如归并排序、斐波那契数列、都可以用分治思想进行求解。</li><li>Fork&#x2F;Join 在<strong>分治的基础上加入了多线程，可以把每个任务的分解和合并交给不同的线程来完成</strong>，进一步提升了运算效率。</li><li>Fork&#x2F;Join 默认会创建与CPU核心数大小相同的线程池。</li></ul><h3 id="二、Fork-x2F-Join框架介绍"><a href="#二、Fork-x2F-Join框架介绍" class="headerlink" title="二、Fork&#x2F;Join框架介绍"></a>二、Fork&#x2F;Join框架介绍</h3><p><strong>Fork&#x2F;Join框架主要包含三个模块</strong>：</p><ul><li>线程池：<code>ForkJoinPool</code></li><li>任务对象: <code>ForkJoinTask</code> (包括<code>RecursiveTask</code>、<code>RecursiveAction</code> 和 <code>CountedCompleter</code>)</li><li>执行Fork&#x2F;Join任务的线程: <code>ForkJoinWorkerThread</code></li></ul><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230330223102206.png" alt="image-20230330223102206"></p><p><strong>三者的关系</strong></p><p><code>ForkJoinPool</code>可以通过池中的<code>ForkJoinWorkerThread</code>来处理<code>ForkJoinTask</code>任务。</p><p><code>ForkJoinPool</code> 只接收 <code>ForkJoinTask</code> 任务(在实际使用中，也可以接收 Runnable&#x2F;Callable 任务，但在真正运行时，也会把这些任务封装成 <code>ForkJoinTask</code> 类型的任务)，<code>RecursiveTask</code> 是 <code>ForkJoinTask</code> 的子类，是一个可以递归执行的 <code>ForkJoinTask</code>，<code>RecursiveAction</code> 是一个无返回值的 <code>RecursiveTask</code>，<code>CountedCompleter</code> 在任务完成执行后会触发执行一个自定义的钩子函数。</p><p>在实际运用中，我们一般都会继承 <code>RecursiveTask</code> 、<code>RecursiveAction</code> 或 <code>CountedCompleter</code> 来实现我们的业务需求，而不会直接继承 <code>ForkJoinTask</code> 类。</p><h3 id="三、Fork-x2F-Join框架核心思想"><a href="#三、Fork-x2F-Join框架核心思想" class="headerlink" title="三、Fork&#x2F;Join框架核心思想"></a>三、Fork&#x2F;Join框架核心思想</h3><h4 id="3-1-分治思想-Divide-and-Conquer"><a href="#3-1-分治思想-Divide-and-Conquer" class="headerlink" title="3.1 分治思想(Divide-and-Conquer)"></a>3.1 分治思想(Divide-and-Conquer)</h4><p>分治算法(Divide-and-Conquer)把任务递归的拆分为各个子任务，这样可以更好的利用系统资源，尽可能的使用所有可用的计算能力来提升应用性能。</p><p>首先看一下 Fork&#x2F;Join 框架的任务运行机制如下图所示：</p><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230330223123683.png" alt="image-20230330223123683"></p><ul><li>**fork()**：开启一个新线程（或是重用线程池内的空闲线程），将任务交给该线程处理。</li><li>**join()**：等待该任务的处理线程处理完毕，获得返回值。</li></ul><p>当然并不会每个 fork 都会创建新线程， 也不是每个 join 都会造成线程被阻塞， 而是采取work-stealing 原理。</p><h4 id="3-2-work-stealing-工作窃取-算法"><a href="#3-2-work-stealing-工作窃取-算法" class="headerlink" title="3.2 work-stealing(工作窃取)算法"></a>3.2 work-stealing(工作窃取)算法</h4><p>线程池内的所有工作线程都尝试找到并执行已经提交的任务，或者是被其他活动任务创建的子任务(如果不存在就阻塞等待)。</p><p>这种特性使得 <code>ForkJoinPool</code> 在运行多个可以产生子任务的任务，或者是提交的许多小任务时效率更高。尤其是构建异步模型的 <code>ForkJoinPool</code> 时，对不需要合并(join)的事件类型任务也非常适用。</p><p>在 <code>ForkJoinPool</code> 中，线程池中每个工作线程(<code>ForkJoinWorkerThread</code>)都对应一个任务队列(<code>WorkQueue</code>)，工作线程优先处理来自自身队列的任务(LIFO或FIFO顺序，参数 mode 决定)，然后以FIFO的顺序随机窃取其他队列中的任务。</p><p><strong>具体思路如下</strong>:</p><ul><li>每个线程都有自己的一个WorkQueue，该工作队列是一个双端队列。</li><li>队列支持三个功能push、pop、poll</li><li>push&#x2F;pop只能被队列的所有者线程调用，而poll可以被其他线程调用。</li><li>划分的子任务调用fork时，都会被push到自己的队列中。</li><li>默认情况下，工作线程从自己的双端队列获取任务并执行。</li><li>当自己的队列为空时，线程随机从另一个线程的队列末尾调用poll方法窃取任务</li></ul><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230330223136768.png" alt="image-20230330223136768"></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>JUC</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>JUC</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Tomcat线程池简单介绍</title>
     <link href="/2023/03/30/Tomcat%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D/"/>
     <url>/2023/03/30/Tomcat%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%AE%80%E5%8D%95%E4%BB%8B%E7%BB%8D/</url>
