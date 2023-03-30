@@ -18,23 +18,20 @@
   <meta name="author" content="程序员小魏">
   <meta name="keywords" content="">
   
-    <meta name="description" content="一、概述1.1 线程池的作用线程池技术就是线程的重用技术，使用已经创建好的线程来执行当前任务，并提供了针对线程周期开销和资源冲突问题的解决方案。 由于请求到达时线程已经存在，因此消除了线程创建过程导致的延迟，使应用程序得到更快的响应。 1.2 线程池的好处 使用线程池可以重复利用已有的线程继续执行任务，避免线程在创建和销毁时造成的消耗； 由于没有线程创建和销毁时的消耗，可以提高系统响应速度； 通过">
+    <meta name="description" content="介绍JUC中的ThreadPoolExecutor线程池相关知识">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ThreadPoolExecutor线程池介绍">
 <meta property="og:url" content="http://example.com/2023/03/30/ThreadPoolExecutor%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%BB%8B%E7%BB%8D/index.html">
 <meta property="og:site_name" content="程序员小魏的后端之旅">
-<meta property="og:description" content="一、概述1.1 线程池的作用线程池技术就是线程的重用技术，使用已经创建好的线程来执行当前任务，并提供了针对线程周期开销和资源冲突问题的解决方案。 由于请求到达时线程已经存在，因此消除了线程创建过程导致的延迟，使应用程序得到更快的响应。 1.2 线程池的好处 使用线程池可以重复利用已有的线程继续执行任务，避免线程在创建和销毁时造成的消耗； 由于没有线程创建和销毁时的消耗，可以提高系统响应速度； 通过">
+<meta property="og:description" content="介绍JUC中的ThreadPoolExecutor线程池相关知识">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/image-20230330163404438.png">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/image-20230330163535335.png">
-<meta property="og:image" content="https://lilinchao.com/usr/uploads/2022/11/1106554336.jpg">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/image-20230330163730801.png">
-<meta property="og:image" content="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/image-20230330163747491.png">
+<meta property="og:image" content="http://example.com/img/JUC.png">
 <meta property="article:published_time" content="2023-03-30T08:29:41.000Z">
-<meta property="article:modified_time" content="2023-03-30T08:38:15.915Z">
+<meta property="article:modified_time" content="2023-03-30T09:15:12.224Z">
 <meta property="article:author" content="程序员小魏">
+<meta property="article:tag" content="JUC">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/WYK24/blogImage@main/img/image-20230330163404438.png">
+<meta name="twitter:image" content="http://example.com/img/JUC.png">
   
   
     <meta name="referrer" content="no-referrer-when-downgrade">
@@ -614,6 +611,34 @@
             <div>
               <div class="post-metas my-3">
   
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/JUC/" class="category-chain-item">JUC</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/JUC/">#JUC</a>
+      
+    </div>
   
 </div>
 
