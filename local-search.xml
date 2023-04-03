@@ -4,6 +4,31 @@
   
   
   <entry>
+    <title>Monitor概念介绍</title>
+    <link href="/2023/04/03/Monitor%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/"/>
+    <url>/2023/04/03/Monitor%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/</url>
+    
+    <content type="html"><![CDATA[<h3 id="一、Java对象头"><a href="#一、Java对象头" class="headerlink" title="一、Java对象头"></a>一、Java对象头</h3><p>HotSpot虚拟机中，对象在内存中存储的布局可以分为三块区域：对象头（Header）、实例数据（Instance Data）和对齐填充（Padding）。</p><p>HotSpot虚拟机的对象头包括三部分信息：</p><ul><li>Mark Word</li><li>指向类的指针</li><li>数组长度</li></ul><h4 id="普通对象"><a href="#普通对象" class="headerlink" title="普通对象"></a>普通对象</h4><p>以 32 位虚拟机为例</p><blockquote><p>Klass Word：指向对象的类型（一个指针找到它的类对象）</p></blockquote><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230403210208174.png" alt="image-20230403210208174"></p><p><strong>一个int 类型占4个字节，而一个Integer对象占8 + 4个字节</strong></p><h4 id="数组对象"><a href="#数组对象" class="headerlink" title="数组对象"></a>数组对象</h4><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230403210220449.png" alt="image-20230403210220449"></p><p><strong>说明</strong></p><p><strong>Object的对象头，分为两部分</strong></p><ul><li><p>第一部分是<code>Mark Word</code>，用来存储对象的运行时数据比如：hashcode，GC分代年龄，锁状态，持有锁信息，偏向锁的thread ID等等。</p><p>在64位的虚拟机中，Mark Word是64bits，如果是在32位的虚拟机中Mark Word是32bits</p></li><li><p>第二部分就是<code>Klass Word</code>，Klass Word是一个类型指针，指向class的元数据，JVM通过Klass Word来判断该对象是哪个class的实例。</p></li></ul><h4 id="Mark-Word结构"><a href="#Mark-Word结构" class="headerlink" title="Mark Word结构"></a>Mark Word结构</h4><ul><li>32位虚拟机下：MarkWord有4个字节 最后2个bit位表示状态</li></ul><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230403210236910.png" alt="image-20230403210236910"></p><p><strong>说明</strong></p><blockquote><p>age：垃圾回收时的分代年龄</p><p>biased_lock：是否为偏向锁</p><p>01&#x2F;00（biased_lock后一位）：加锁状态</p><p>Normal：对象正常状态</p><p>当对对象进行相应改变，如施加轻量级锁、重量级锁，GC时，相应的Mark Word Structure会发生改变</p></blockquote><p><strong>状态说明</strong></p><table><thead><tr><th>状态</th><th>标志位</th><th>存储内容</th></tr></thead><tbody><tr><td>未锁定</td><td>01</td><td>对象哈希码、对象分代年龄</td></tr><tr><td>轻量级锁定</td><td>00</td><td>指向锁记录的指针</td></tr><tr><td>膨胀(重量级锁定)</td><td>10</td><td>执行重量级锁定的指针</td></tr><tr><td>GC标记</td><td>11</td><td>空(不需要记录信息)</td></tr><tr><td>可偏向</td><td>01</td><td>偏向线程ID、偏向时间戳、对象分代年龄</td></tr></tbody></table><ul><li>64位虚拟机下：MarkWord有8个字节 最后2个bit位表示状态</li></ul><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230403210250034.png" alt="image-20230403210250034"></p><h3 id="二、Monitor概念"><a href="#二、Monitor概念" class="headerlink" title="二、Monitor概念"></a>二、Monitor概念</h3><p>Monitor被翻译为监视器或管程（通常称为“锁”）</p><p>每个Java对象都可以关联一个Monitor对象（JVM提供），如果使用synchronized给对象上锁(重量级)之后,该对象头的Mark Word中就被设置指向Monitor对象的指针</p><h4 id="Monitor结构"><a href="#Monitor结构" class="headerlink" title="Monitor结构"></a>Monitor结构</h4><p><img src="https://lilinchao.com/usr/uploads/2022/10/673211994.jpg" alt="14.并发编程之Monitor概念介绍05.jpg"></p><ul><li><strong>Monitor属性含义</strong><ul><li><strong>Owner</strong>：锁的拥有者，唯一性，当线程尝试获得锁时若有其他线程引用，则无法获得</li><li><strong>EntryList</strong>：阻塞（等待）队列，其他线程无法获得锁时，则一起进入阻塞队列，但是一旦线程释放锁，它们是竞争获得锁（而不是先来后到）</li><li><strong>WaitSet</strong>：存放处于wait状态的线程队列，即调用wait()方法的线程</li></ul></li></ul><p>obj对象的<code>MarkWord</code>结构指向<code>Monitor</code>对象，当t2执行到<code>synchronized</code>方法时，首先判断临界区代码是否加锁。</p><p>t2首先判断Monitor Owner是否有线程引用，无则获得锁，执行临界区代码，其他线程t1，t3则进入阻塞队列，等待t2释放锁。</p><h4 id="Monitor调用步骤"><a href="#Monitor调用步骤" class="headerlink" title="Monitor调用步骤"></a>Monitor调用步骤</h4><p><img src="https://lilinchao.com/usr/uploads/2022/10/1266956615.jpg" alt="14.并发编程之Monitor概念介绍06.jpg"></p><ul><li>刚开始<code>Monitor</code>中<code>Owner</code>为<code>null</code></li><li>当<code>Thread-2</code> 执行<code>synchronized(obj)</code>就会将Monitor的所有者Owner置为<code>Thread-2</code>, <code>Monitor</code>中只能有一个<code>Owner</code></li><li>在<code>Thread-2</code>上锁的过程中，如果<code>Thread-3，Thread-4， Thread-5</code> 也来执行<code>synchronized(obj)</code>, 就会进入<code>EntryList BLOCKED</code></li><li><code>Thread-2</code>执行完同步代码块的内容，然后唤醒EntryList中等待的线程来竞争锁，竞争的时是非公平的</li><li>图中<code>WaitSet</code>中的<code>Thread-0</code>，<code>Thread-1</code> 是之前获得过锁，但条件不满足进入WAITING状态的线程，后面讲<code>wait-notify</code>时会分析</li></ul><blockquote><p>注意</p><ul><li>synchronized必须是进入<strong>同一个对象</strong>的monitor才有上述的效果</li><li>不加synchronized的对象不会关联监视器，不遵从以上规则</li></ul></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>JUC</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>JUC</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>CyclicBarrier介绍</title>
     <link href="/2023/03/31/CyclicBarrier%E4%BB%8B%E7%BB%8D/"/>
     <url>/2023/03/31/CyclicBarrier%E4%BB%8B%E7%BB%8D/</url>
