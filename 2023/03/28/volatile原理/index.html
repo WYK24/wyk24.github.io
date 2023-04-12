@@ -27,7 +27,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/img/JUC.png">
 <meta property="article:published_time" content="2023-03-28T15:24:07.000Z">
-<meta property="article:modified_time" content="2023-03-28T15:44:12.417Z">
+<meta property="article:modified_time" content="2023-04-12T06:52:06.210Z">
 <meta property="article:author" content="程序员小魏">
 <meta property="article:tag" content="JUC">
 <meta name="twitter:card" content="summary_large_image">
@@ -372,8 +372,8 @@
 <li>一是保证特定操作的执行顺序；</li>
 <li>二是保证某些变量的内存可见性（利用该特性实现volatile的内存可见性）。</li>
 </ul>
-<p>由于编译器和处理器都能执行指令重排优化。如果在指令间插入一条Memory Barrier则会告诉编译器和CPU，不管什么指令都不能和这条Memory Barrier指令重排序，也就是说*<u><strong>通过插入内存屏障禁止在内存屏障前后的指令执行重排序优化</strong></u>*。</p>
-<p>Memory Barrier的另外一个作用是*<u><strong>强制刷出各种CPU的缓存数据，因此任何CPU上的线程都能读取到这些数据的最新版本</strong></u><em>。总之，</em><u><strong>volatile变量正是通过内存屏障（lock指令）实现其在内存中的语义，即可见性和禁止重排优化</strong></u>*。</p>
+<p>由于编译器和处理器都能执行指令重排优化。如果在指令间插入一条Memory Barrier则会告诉编译器和CPU，不管什么指令都不能和这条Memory Barrier指令重排序，也就是说<u><strong>通过插入内存屏障禁止在内存屏障前后的指令执行重排序优化</strong></u>。</p>
+<p>Memory Barrier的另外一个作用是<u><strong>强制刷出各种CPU的缓存数据，因此任何CPU上的线程都能读取到这些数据的最新版本</strong></u><em>。总之，</em><u><strong>volatile变量正是通过内存屏障（lock指令）实现其在内存中的语义，即可见性和禁止重排优化</strong></u>。</p>
 <h3 id="二、volatile的内存语义实现"><a href="#二、volatile的内存语义实现" class="headerlink" title="二、volatile的内存语义实现"></a>二、volatile的内存语义实现</h3><h4 id="2-1-volatile-重排序规则"><a href="#2-1-volatile-重排序规则" class="headerlink" title="2.1 volatile 重排序规则"></a>2.1 volatile 重排序规则</h4><p>为了保证内存可见性，java编译器在生成指令序列的适当位置会插入内存屏障指令来禁止特定类型的处理器重排序。内存屏障是一组处理指令，用来实现对内存操作的顺序限制。</p>
 <p>为了实现 volatile 的内存语义，JMM 会限制特定类型的编译器和处理器重排序，JMM 会针对编译器制定 volatile 重排序规则表：</p>
 <p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230328232703364.png" srcset="/img/loading.gif" lazyload alt="image-20230328232703364"></p>
@@ -414,7 +414,7 @@
 <p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230328232956725.png" srcset="/img/loading.gif" lazyload alt="image-20230328232956725"></p>
 <p><strong>分析</strong></p>
 <ul>
-<li>上图中StoreStore屏障*<u><strong>可以保证在volatile写之前，其前面的所有普通写操作已经对任意处理器可见了。这是因为StoreStore屏障将保障上面所有的普通写在volatile写之前刷新到主内存。</strong></u>*（这就是实现了volatile变量的可见性）</li>
+<li>上图中StoreStore屏障<u><strong>可以保证在volatile写之前，其前面的所有普通写操作已经对任意处理器可见了。这是因为StoreStore屏障将保障上面所有的普通写在volatile写之前刷新到主内存。</strong></u>（这就是实现了volatile变量的可见性）</li>
 <li>而volatile写后面的StoreLoad屏障，作用是避免volatile写与后面可能有的volatile读&#x2F;写操作重排序。</li>
 </ul>
 <h5 id="示例二"><a href="#示例二" class="headerlink" title="示例二"></a>示例二</h5><p>下图是在保守策略下，volatile读插入内存屏障后生成的指令序列示意图</p>
