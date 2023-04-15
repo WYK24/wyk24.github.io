@@ -18,26 +18,26 @@
   <meta name="author" content="程序员小魏">
   <meta name="keywords" content="">
   
-    <meta name="description" content="介绍了Java对象头、Monitor相关知识">
+    <meta name="description" content="介绍了MySQL中的锁知识">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Monitor概念介绍">
-<meta property="og:url" content="http://example.com/2023/04/03/Monitor%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/index.html">
+<meta property="og:title" content="MySQL锁总结">
+<meta property="og:url" content="http://example.com/2023/04/15/MySQL%E9%94%81%E6%80%BB%E7%BB%93/index.html">
 <meta property="og:site_name" content="程序员小魏的后端之旅">
-<meta property="og:description" content="介绍了Java对象头、Monitor相关知识">
+<meta property="og:description" content="介绍了MySQL中的锁知识">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://example.com/img/JUC.png">
-<meta property="article:published_time" content="2023-04-03T13:00:37.000Z">
-<meta property="article:modified_time" content="2023-04-03T13:13:19.758Z">
+<meta property="og:image" content="http://example.com/img/mysql.png">
+<meta property="article:published_time" content="2023-04-15T11:17:27.000Z">
+<meta property="article:modified_time" content="2023-04-15T11:26:59.909Z">
 <meta property="article:author" content="程序员小魏">
-<meta property="article:tag" content="JUC">
+<meta property="article:tag" content="数据库">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="http://example.com/img/JUC.png">
+<meta name="twitter:image" content="http://example.com/img/mysql.png">
   
   
     <meta name="referrer" content="no-referrer-when-downgrade">
   
   
-  <title>Monitor概念介绍 - 程序员小魏的后端之旅</title>
+  <title>MySQL锁总结 - 程序员小魏的后端之旅</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -276,7 +276,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="Monitor概念介绍"></span>
+            <span id="subtitle" data-typed-text="MySQL锁总结"></span>
           
         </div>
 
@@ -292,8 +292,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2023-04-03 21:00" pubdate>
-           2023 年 04 月 03 日 , 晚上 09:00 , 星期一
+        <time datetime="2023-04-15 19:17" pubdate>
+           2023 年 04 月 15 日 , 晚上 07:17 , 星期六
         </time>
       </span>
     
@@ -305,7 +305,7 @@
         <i class="iconfont icon-chart"></i>
         
           <!-- compatible with older versions-->
-          1.6k 字
+          1.9k 字
         
       </span>
     
@@ -316,7 +316,7 @@
         
         
         
-          13 分钟
+          17 分钟
         
       </span>
     
@@ -362,113 +362,82 @@
         <div id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">Monitor概念介绍</h1>
+            <h1 style="display: none">MySQL锁总结</h1>
             
             
               <div class="markdown-body">
                 
-                <h3 id="一、Java对象头"><a href="#一、Java对象头" class="headerlink" title="一、Java对象头"></a>一、Java对象头</h3><p>HotSpot虚拟机中，对象在内存中存储的布局可以分为三块区域：对象头（Header）、实例数据（Instance Data）和对齐填充（Padding）。</p>
-<p>HotSpot虚拟机的对象头包括三部分信息：</p>
-<ul>
-<li>Mark Word</li>
-<li>指向类的指针</li>
-<li>数组长度</li>
-</ul>
-<h4 id="普通对象"><a href="#普通对象" class="headerlink" title="普通对象"></a>普通对象</h4><p>以 32 位虚拟机为例</p>
+                <h2 id="锁分类"><a href="#锁分类" class="headerlink" title="锁分类"></a>锁分类</h2><p>在MySQL中，</p>
+<p><strong>按锁粒度分类</strong>：全局锁、表级锁和行级锁。</p>
+<p><strong>按锁级别分类</strong>：共享锁（读锁）、排他锁（写锁）和意向锁。</p>
 <blockquote>
-<p>Klass Word：指向对象的类型（一个指针找到它的类对象）</p>
+<p>说明：</p>
+<p>意向锁是 InnoDB 自动加的，不需要用户干预。</p>
+<p>对于INSERT、UPDATE和DELETE，InnoDB 会自动给涉及的数据加排他锁；</p>
+<p>对于一般的SELECT语句，InnoDB 不会加任何锁，事务可以通过以下语句显式加共享锁或排他锁。</p>
+<p>共享锁：SELECT … LOCK IN SHARE MODE;</p>
+<p>排他锁：SELECT … FOR UPDATE;</p>
 </blockquote>
-<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230403210208174.png" srcset="/img/loading.gif" lazyload alt="image-20230403210208174"></p>
-<p><strong>一个int 类型占4个字节，而一个Integer对象占8 + 4个字节</strong></p>
-<h4 id="数组对象"><a href="#数组对象" class="headerlink" title="数组对象"></a>数组对象</h4><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230403210220449.png" srcset="/img/loading.gif" lazyload alt="image-20230403210220449"></p>
-<p><strong>说明</strong></p>
-<p><strong>Object的对象头，分为两部分</strong></p>
-<ul>
-<li><p>第一部分是<code>Mark Word</code>，用来存储对象的运行时数据比如：hashcode，GC分代年龄，锁状态，持有锁信息，偏向锁的thread ID等等。</p>
-<p>在64位的虚拟机中，Mark Word是64bits，如果是在32位的虚拟机中Mark Word是32bits</p>
-</li>
-<li><p>第二部分就是<code>Klass Word</code>，Klass Word是一个类型指针，指向class的元数据，JVM通过Klass Word来判断该对象是哪个class的实例。</p>
-</li>
-</ul>
-<h4 id="Mark-Word结构"><a href="#Mark-Word结构" class="headerlink" title="Mark Word结构"></a>Mark Word结构</h4><ul>
-<li>32位虚拟机下：MarkWord有4个字节 最后2个bit位表示状态</li>
-</ul>
-<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230403210236910.png" srcset="/img/loading.gif" lazyload alt="image-20230403210236910"></p>
-<p><strong>说明</strong></p>
-<blockquote>
-<p>age：垃圾回收时的分代年龄</p>
-<p>biased_lock：是否为偏向锁</p>
-<p>01&#x2F;00（biased_lock后一位）：加锁状态</p>
-<p>Normal：对象正常状态</p>
-<p>当对对象进行相应改变，如施加轻量级锁、重量级锁，GC时，相应的Mark Word Structure会发生改变</p>
+<h2 id="全局锁"><a href="#全局锁" class="headerlink" title="全局锁"></a>全局锁</h2><p>全局锁就是对整个数据库实例加锁，加锁后整个实例就处于只读状态，后续的DML的写语句，DDL语句，已经更新操作的事务提交语句都将被阻塞。</p>
+<p>其典型的使用场景是做全库的逻辑备份，对所有的表进行锁定，从而获取一致性视图，保证数据的完整性。</p>
+<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230415192348573.png" srcset="/img/loading.gif" lazyload alt="image-20230415192348573"></p>
+<p>对数据库进行进行逻辑备份之前，先对整个数据库加上全局锁，一旦加了全局锁之后，其他的DDL、DML全部都处于阻塞状态，但是可以执行DQL语句，也就是处于只读状态，而数据备份就是查询操作。 那么数据在进行逻辑备份的过程中，数据库中的数据就是不会发生变化的，这样就保证了数据的一致性和完整性。</p>
+<h3 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h3><p>加全局锁</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql">flush tables <span class="hljs-keyword">with</span> read lock ; <br></code></pre></td></tr></table></figure>
+
+<p>释放全局锁</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs sql">unlock tables ; <br></code></pre></td></tr></table></figure>
+
+
+
+<h2 id="表级锁"><a href="#表级锁" class="headerlink" title="表级锁"></a><strong>表级锁</strong></h2><p>表级锁，每次操作锁住整张表。对于表级锁，主要分为以下三类： 表锁、元数据锁（meta data lock，MDL）、 意向锁</p>
+<h3 id="表锁"><a href="#表锁" class="headerlink" title="表锁"></a>表锁</h3><blockquote>
+<p>分为两类：表读锁和表写锁</p>
 </blockquote>
-<p><strong>状态说明</strong></p>
-<table>
-<thead>
-<tr>
-<th>状态</th>
-<th>标志位</th>
-<th>存储内容</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>未锁定</td>
-<td>01</td>
-<td>对象哈希码、对象分代年龄</td>
-</tr>
-<tr>
-<td>轻量级锁定</td>
-<td>00</td>
-<td>指向锁记录的指针</td>
-</tr>
-<tr>
-<td>膨胀(重量级锁定)</td>
-<td>10</td>
-<td>执行重量级锁定的指针</td>
-</tr>
-<tr>
-<td>GC标记</td>
-<td>11</td>
-<td>空(不需要记录信息)</td>
-</tr>
-<tr>
-<td>可偏向</td>
-<td>01</td>
-<td>偏向线程ID、偏向时间戳、对象分代年龄</td>
-</tr>
-</tbody></table>
 <ul>
-<li>64位虚拟机下：MarkWord有8个字节 最后2个bit位表示状态</li>
+<li>语法</li>
 </ul>
-<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230403210250034.png" srcset="/img/loading.gif" lazyload alt="image-20230403210250034"></p>
-<h3 id="二、Monitor概念"><a href="#二、Monitor概念" class="headerlink" title="二、Monitor概念"></a>二、Monitor概念</h3><p>Monitor被翻译为监视器或管程（通常称为“锁”）</p>
-<p>每个Java对象都可以关联一个Monitor对象（JVM提供），如果使用synchronized给对象上锁(重量级)之后,该对象头的Mark Word中就被设置指向Monitor对象的指针</p>
-<h4 id="Monitor结构"><a href="#Monitor结构" class="headerlink" title="Monitor结构"></a>Monitor结构</h4><p><img src="https://lilinchao.com/usr/uploads/2022/10/673211994.jpg" srcset="/img/loading.gif" lazyload alt="14.并发编程之Monitor概念介绍05.jpg"></p>
+<p>加锁：lock tables 表名… read&#x2F;write。 </p>
+<p>释放锁：unlock tables &#x2F; 客户端断开连接 。</p>
 <ul>
-<li><strong>Monitor属性含义</strong><ul>
-<li><strong>Owner</strong>：锁的拥有者，唯一性，当线程尝试获得锁时若有其他线程引用，则无法获得</li>
-<li><strong>EntryList</strong>：阻塞（等待）队列，其他线程无法获得锁时，则一起进入阻塞队列，但是一旦线程释放锁，它们是竞争获得锁（而不是先来后到）</li>
-<li><strong>WaitSet</strong>：存放处于wait状态的线程队列，即调用wait()方法的线程</li>
+<li>特点</li>
 </ul>
-</li>
-</ul>
-<p>obj对象的<code>MarkWord</code>结构指向<code>Monitor</code>对象，当t2执行到<code>synchronized</code>方法时，首先判断临界区代码是否加锁。</p>
-<p>t2首先判断Monitor Owner是否有线程引用，无则获得锁，执行临界区代码，其他线程t1，t3则进入阻塞队列，等待t2释放锁。</p>
-<h4 id="Monitor调用步骤"><a href="#Monitor调用步骤" class="headerlink" title="Monitor调用步骤"></a>Monitor调用步骤</h4><p><img src="https://lilinchao.com/usr/uploads/2022/10/1266956615.jpg" srcset="/img/loading.gif" lazyload alt="14.并发编程之Monitor概念介绍06.jpg"></p>
+<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230415192406198.png" srcset="/img/loading.gif" lazyload alt="image-20230415192406198"></p>
 <ul>
-<li>刚开始<code>Monitor</code>中<code>Owner</code>为<code>null</code></li>
-<li>当<code>Thread-2</code> 执行<code>synchronized(obj)</code>就会将Monitor的所有者Owner置为<code>Thread-2</code>, <code>Monitor</code>中只能有一个<code>Owner</code></li>
-<li>在<code>Thread-2</code>上锁的过程中，如果<code>Thread-3，Thread-4， Thread-5</code> 也来执行<code>synchronized(obj)</code>, 就会进入<code>EntryList BLOCKED</code></li>
-<li><code>Thread-2</code>执行完同步代码块的内容，然后唤醒EntryList中等待的线程来竞争锁，竞争的时是非公平的</li>
-<li>图中<code>WaitSet</code>中的<code>Thread-0</code>，<code>Thread-1</code> 是之前获得过锁，但条件不满足进入WAITING状态的线程，后面讲<code>wait-notify</code>时会分析</li>
+<li>结论:</li>
 </ul>
-<blockquote>
-<p>注意</p>
-<ul>
-<li>synchronized必须是进入<strong>同一个对象</strong>的monitor才有上述的效果</li>
-<li>不加synchronized的对象不会关联监视器，不遵从以上规则</li>
-</ul>
+<p>读锁不会阻塞其他客户端的读，但是会阻塞写。写锁既会阻塞其他客户端的读，又会阻塞其他客户端的写。</p>
+<h3 id="元数据锁"><a href="#元数据锁" class="headerlink" title="元数据锁"></a><strong>元数据锁</strong></h3><p>meta data lock , 元数据锁，简写MDL。</p>
+<p>MDL加锁过程是系统自动控制，无需显式使用，在访问一张表的时候会自动加上。MDL锁主要作用是维护表元数据的数据一致性，在表上有活动事务的时候，不可以对元数据进行写入操作。<strong>为了避免DML与DDL冲突，保证读写的正确性****。</strong></p>
+<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230415192420954.png" srcset="/img/loading.gif" lazyload alt="image-20230415192420954"></p>
+<p>总结：执行了select、update、delete、insert操作后就不能再次执行alter table，反之亦然。<strong>避免了DML与DDL冲突。</strong></p>
+<h3 id="意向锁"><a href="#意向锁" class="headerlink" title="意向锁"></a><strong>意向锁</strong></h3><p>为了避免DML在执行时，加的行锁与表锁的冲突，在InnoDB中引入了意向锁，使得表锁不用检查每行数据是否加锁，使用意向锁来减少表锁的检查。</p>
+<p>意向锁和行锁一起出现，当一条记录加了行锁后，它也会加上意向锁。</p>
+<h4 id="分类"><a href="#分类" class="headerlink" title="分类"></a>分类</h4><p>意向共享锁(IS): 由语句select … lock in share mode添加 。 与表锁共享锁(read)兼容，与表锁排他锁(write)互斥。 就是说其中有一条记录加上了IS锁，就不能加表写锁了。</p>
+<p>意向排他锁(IX): 由insert、update、delete、select…for update添加 。与表锁共享锁(read)及排他锁(write)都互斥，意向锁之间不会互斥。</p>
+<p>一旦事务提交了，意向共享锁、意向排他锁，都会自动释放。</p>
+<h2 id="行级锁"><a href="#行级锁" class="headerlink" title="行级锁"></a><strong>行级锁</strong></h2><p>行级锁，每次操作锁住对应的行数据。只应用于InnoDB引擎，分为以下三类：</p>
+<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230415192433482.png" srcset="/img/loading.gif" lazyload alt="image-20230415192433482"></p>
+<p>注意：默认情况下，InnoDB工作在可重复读隔离级别下，并且会以Next-Key Lock的方式对数据行进行加锁，这样可以有效防止幻读的发生。Next-Key Lock是行锁和间隙锁的组合，当InnoDB扫描索引记录的时候，会首先对索引记录加上行锁（Record Lock），再对索引记录两边的间隙加上间隙锁（Gap Lock）。加上间隙锁之后，其他事务就不能在这个间隙修改或者插入记录。</p>
+<h3 id="行锁"><a href="#行锁" class="headerlink" title="行锁"></a>行锁</h3><blockquote>
+<p>分为了共享锁和排他锁</p>
 </blockquote>
+<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230415192451586.png" srcset="/img/loading.gif" lazyload></p>
+<h4 id="对应SQL语句"><a href="#对应SQL语句" class="headerlink" title="对应SQL语句"></a>对应SQL语句</h4><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230415192505882.png" srcset="/img/loading.gif" lazyload alt="image-20230415192505882"></p>
+<p>针对唯一索引进行检索时，对已存在的记录进行等值匹配时，将会自动优化为行锁。 </p>
+<p>InnoDB的行锁是针对于索引加的锁，不通过索引条件检索数据，那么InnoDB将对表中的所有记录加锁，此时就会升级为表锁。</p>
+<h3 id="间隙锁和临键锁"><a href="#间隙锁和临键锁" class="headerlink" title="间隙锁和临键锁"></a>间隙锁和临键锁</h3><p>对于它们的特点，具体见这篇文章：<a target="_blank" rel="noopener" href="https://www.modb.pro/db/11533">行级锁介绍</a></p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>记录锁、间隙锁、临键锁，都属于排它锁；</li>
+<li>记录锁就是锁住一行记录；</li>
+<li>间隙锁只有在事务隔离级别 RR 中才会产生；</li>
+<li>唯一索引只有锁住多条记录或者一条不存在的记录的时候，才会产生间隙锁，指定给某条存在的记录加锁的时候，只会加记录锁，不会产生间隙锁；</li>
+<li>普通索引不管是锁住单条，还是多条记录，都会产生间隙锁；</li>
+<li>间隙锁会封锁该条记录相邻两个键之间的空白区域，防止其它事务在这个区域内插入、修改、删除数据，这是为了防止出现 幻读 现象；</li>
+<li>普通索引的间隙，优先以普通索引排序，然后再根据主键索引排序；</li>
+<li>事务级别是RC（读已提交）级别的话，间隙锁将会失效</li>
+<li>间隙锁唯一目的是防止其他事务插入间隙。间隙锁可以共存，一个事务采用的间隙锁不会阻止另一个事务在同一间隙上采用间隙锁。</li>
+</ul>
 
                 
               </div>
@@ -487,7 +456,7 @@
     
       <span class="category-chain">
         
-  <a href="/categories/JUC/" class="category-chain-item">JUC</a>
+  <a href="/categories/MySQL/" class="category-chain-item">MySQL</a>
   
   
 
@@ -502,7 +471,7 @@
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/tags/JUC/">#JUC</a>
+        <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/">#数据库</a>
       
     </div>
   
@@ -514,8 +483,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>Monitor概念介绍</div>
-      <div>http://example.com/2023/04/03/Monitor概念介绍/</div>
+      <div>MySQL锁总结</div>
+      <div>http://example.com/2023/04/15/MySQL锁总结/</div>
     </div>
     <div class="license-meta">
       
@@ -527,7 +496,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2023年4月3日</div>
+          <div>2023年4月15日</div>
         </div>
       
       
@@ -559,18 +528,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2023/04/15/MySQL%E9%94%81%E6%80%BB%E7%BB%93/" title="MySQL锁总结">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">MySQL锁总结</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2023/03/31/CyclicBarrier%E4%BB%8B%E7%BB%8D/" title="CyclicBarrier介绍">
-                        <span class="hidden-mobile">CyclicBarrier介绍</span>
+                      <a href="/2023/04/03/Monitor%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D/" title="Monitor概念介绍">
+                        <span class="hidden-mobile">Monitor概念介绍</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
