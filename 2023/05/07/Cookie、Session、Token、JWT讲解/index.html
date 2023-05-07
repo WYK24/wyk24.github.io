@@ -1,0 +1,1097 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/tree.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="程序员小魏">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="对Cookie、Session、Token、JWT进行深刻讲解，同时介绍了登录功能实现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Cookie、Session、Token、JWT讲解">
+<meta property="og:url" content="http://example.com/2023/05/07/Cookie%E3%80%81Session%E3%80%81Token%E3%80%81JWT%E8%AE%B2%E8%A7%A3/index.html">
+<meta property="og:site_name" content="程序员小魏的后端之旅">
+<meta property="og:description" content="对Cookie、Session、Token、JWT进行深刻讲解，同时介绍了登录功能实现">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/web.png">
+<meta property="article:published_time" content="2023-05-07T06:26:59.000Z">
+<meta property="article:modified_time" content="2023-05-07T07:09:22.629Z">
+<meta property="article:author" content="程序员小魏">
+<meta property="article:tag" content="项目功能">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="http://example.com/img/web.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>Cookie、Session、Token、JWT讲解 - 程序员小魏的后端之旅</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_hj8rtnfg7um.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_3846514_kabxni94auf.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/bynotes/texiao/source/css/shubiao.css">
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/bynotes/texiao/source/css/gundongtiao.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.4","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":true,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":true,"follow_dnt":true,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+
+
+  
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>程序员小魏的后端之旅</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives">
+                <i class="iconfont icon-books"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories">
+                <i class="iconfont icon-th-large"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" target="_self" href="javascript:;" role="button"
+                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="iconfont icon-book"></i>
+                <span>文档</span>
+              </a>
+              <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/">
+                    
+                    <span>主题博客</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/guide/">
+                    
+                    <span>配置指南</span>
+                  </a>
+                
+                  
+                  
+                  
+                  <a class="dropdown-item" target="_blank" rel="noopener" href="https://hexo.fluid-dev.com/docs/icon/">
+                    
+                    <span>图标用法</span>
+                  </a>
+                
+              </div>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/img/8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Cookie、Session、Token、JWT讲解"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        程序员小魏
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2023-05-07 14:26" pubdate>
+           2023 年 05 月 07 日 , 下午 02:26 , 星期日
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          <!-- compatible with older versions-->
+          8.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          73 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次
+        </span>
+        
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Cookie、Session、Token、JWT讲解</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="什么是认证（Authentication）"><a href="#什么是认证（Authentication）" class="headerlink" title="什么是认证（Authentication）"></a>什么是认证（Authentication）</h2><ul>
+<li>通俗地讲就是<strong>验证当前用户的身份</strong>，证明“你是你自己”（比如：你每天上下班打卡，都需要通过指纹打卡，当你的指纹和系统里录入的指纹相匹配时，就打卡成功）</li>
+<li>互联网中的认证：<ul>
+<li>用户名密码登录</li>
+<li>邮箱发送登录链接</li>
+<li>手机号接收验证码</li>
+<li>只要你能收到邮箱&#x2F;验证码，就默认你是账号的主人</li>
+</ul>
+</li>
+</ul>
+<h2 id="什么是授权（Authorization）"><a href="#什么是授权（Authorization）" class="headerlink" title="什么是授权（Authorization）"></a>什么是授权（Authorization）</h2><ul>
+<li>用户授予第三方应用访问该用户某些资源的权限<ul>
+<li>你在安装手机应用的时候，APP 会询问是否允许授予权限（访问相册、地理位置等权限）</li>
+<li>你在访问微信小程序时，当登录时，小程序会询问是否允许授予权限（获取昵称、头像、地区、性别等个人信息）</li>
+</ul>
+</li>
+<li>实现授权的方式有：cookie、session、token、OAuth</li>
+</ul>
+<h2 id="什么是凭证（Credentials）"><a href="#什么是凭证（Credentials）" class="headerlink" title="什么是凭证（Credentials）"></a>什么是凭证（Credentials）</h2><ul>
+<li>实现认证和授权的前提是需要一种媒介（证书）来标记访问者的身份<ul>
+<li>在互联网应用中，一般网站（如掘金）会有两种模式，游客模式和登录模式。游客模式下，可以正常浏览网站上面的文章，一旦想要点赞&#x2F;收藏&#x2F;分享文章，就需要登录或者注册账号。当用户登录成功后，服务器会给该用户使用的浏览器颁发一个令牌（<em>token</em>），这个令牌用来表明你的身份，每次浏览器发送请求时会带上这个令牌，就可以使用游客模式下无法使用的功能。</li>
+</ul>
+</li>
+</ul>
+<h2 id="什么是-Cookie"><a href="#什么是-Cookie" class="headerlink" title="什么是 Cookie"></a>什么是 Cookie</h2><ul>
+<li><strong>HTTP 是无状态的协议（对于事务处理没有记忆能力，每次客户端和服务端会话完成时，服务端不会保存任何会话信息）</strong>：每个请求都是完全独立的，服务端无法确认当前访问者的身份信息，无法分辨上一次的请求发送者和这一次的发送者是不是同一个人。所以服务器与浏览器为了进行会话跟踪（知道是谁在访问我），就必须主动的去维护一个状态，这个状态用于告知服务端前后两个请求是否来自同一浏览器。而这个状态需要通过 cookie 或者 session 去实现。</li>
+<li><strong>cookie 存储在客户端：</strong> cookie 是服务器发送到用户浏览器并保存在本地的一小块数据，它会在浏览器下次向同一服务器再发起请求时被携带并发送到服务器上。</li>
+<li><strong>cookie 是不可跨域的：</strong> 每个 cookie 都会绑定单一的域名，无法在别的域名下获取使用，<strong>一级域名和二级域名之间是允许共享使用的</strong>（<strong>靠的是 domain）</strong>。</li>
+</ul>
+<p><strong>cookie 重要的属性</strong></p>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>name&#x3D;value</strong></td>
+<td>键值对，设置 Cookie 的名称及相对应的值，都必须是<strong>字符串类型</strong> - 如果值为 Unicode 字符，需要为字符编码。 - 如果值为二进制数据，则需要使用 BASE64 编码。</td>
+</tr>
+<tr>
+<td><strong>domain</strong></td>
+<td>指定 cookie 所属域名，默认是当前域名</td>
+</tr>
+<tr>
+<td><strong>path</strong></td>
+<td>**指定 cookie 在哪个路径（路由）下生效，默认是 ‘&#x2F;‘**。 如果设置为 <code>/abc</code>，则只有 <code>/abc</code> 下的路由可以访问到该 cookie，如：<code>/abc/read</code>。</td>
+</tr>
+<tr>
+<td><strong>maxAge</strong></td>
+<td>cookie 失效的时间，单位秒。如果为整数，则该 cookie 在 maxAge 秒后失效。如果为负数，该 cookie 为临时 cookie ，关闭浏览器即失效，浏览器也不会以任何形式保存该 cookie 。如果为 0，表示删除该 cookie 。默认为 -1。  <strong>比 expires 好用</strong>。</td>
+</tr>
+<tr>
+<td><strong>expires</strong></td>
+<td>过期时间，在设置的某个时间点后该 cookie 就会失效。 一般浏览器的 cookie 都是默认储存的，当关闭浏览器结束这个会话的时候，这个 cookie 也就会被删除</td>
+</tr>
+<tr>
+<td><strong>secure</strong></td>
+<td>该 cookie 是否仅被使用安全协议传输。安全协议有 HTTPS，SSL等，在网络上传输数据之前先将数据加密。默认为false。 当 secure 值为 true 时，cookie 在 HTTP 中是无效，在 HTTPS 中才有效。</td>
+</tr>
+<tr>
+<td><strong>httpOnly</strong></td>
+<td>如果给某个 cookie 设置了 httpOnly 属性，则无法通过 JS 脚本 读取到该 cookie 的信息，但还是能通过 Application 中手动修改 cookie，所以只是在一定程度上可以防止 XSS 攻击，不是绝对的安全</td>
+</tr>
+</tbody></table>
+<h3 id="Cookie的两种类型"><a href="#Cookie的两种类型" class="headerlink" title="Cookie的两种类型"></a>Cookie的两种类型</h3><p>在项目开发中我们时常将需要在客户端（浏览器）缓存的数据，一般客户端数据我们使用Cookie中，所以有必要了解清楚Cookie在保存数据时的两种类型。</p>
+<p>两种类型的Cookie：</p>
+<ul>
+<li><u>临时Cookie（会话Cookie）</u></li>
+<li><u>永久Cookie</u></li>
+</ul>
+<ol>
+<li><p>不设置过期时间，则表示这个cookie生命周期为浏览器会话期间，<strong>只要关闭浏览器窗口，cookie就消失了</strong>。这种生命期为浏览会话期的cookie被称为会话cookie。会话cookie一般不保存在硬盘上而是保存在内存里。</p>
+</li>
+<li><p>设置了过期时间，浏览器就会把cookie保存到硬盘上，关闭后再次打开浏览器，这些cookie依然有效直到超过设定的过期时间。存储在硬盘上的cookie可以在不同的浏览器进程间共享，比如两个IE窗口。而对于保存在内存的cookie，不同的浏览器有不同的处理方式。</p>
+</li>
+</ol>
+<blockquote>
+<p>Cookie分为内存中Cookie（也可以说是进程中Cookie）和硬盘中Cookie。大部分的Session机制都使用进程中Cookie来保存Session id的，关闭浏览器后这个进程也就自动消失了，进程中的Cookie自然就消失了，那么Session id也跟着消失了，再次连接到服务器时也就无法找到原来的Session了。</p>
+<p>其实服务器是不会知道浏览器关闭了没有（当然，你可以在关闭的时候去通知服务器，但一般都不会这样做），所以<strong>关闭浏览器时服务器是不会删除Session的</strong>，也正是这个原因服务器才会设置一个Session失效时间的，不然服务器早晚会被撑爆的。等距离上一次使用该Session的时间达到设置的失效时间时，服务器就会认为客户端已停止活动，便会将相应的Session删除。</p>
+</blockquote>
+<h2 id="什么是-Session"><a href="#什么是-Session" class="headerlink" title="什么是 Session"></a>什么是 Session</h2><ul>
+<li><strong>session 是另一种记录服务器和客户端会话状态的机制</strong></li>
+<li><strong>session 是基于 cookie 实现的，session 存储在服务器端，sessionId 会被存储到客户端的cookie 中</strong></li>
+</ul>
+<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230507143556124.png" srcset="/img/loading.gif" lazyload alt="image-20230507143556124"></p>
+<ul>
+<li>session 认证流程：<ul>
+<li>用户第一次请求服务器的时候，服务器根据用户提交的相关信息，创建对应的 Session</li>
+<li>请求返回时将此 Session 的唯一标识信息 SessionID 返回给浏览器</li>
+<li>浏览器接收到服务器返回的 SessionID 信息后，会将此信息存入到 Cookie 中，同时 Cookie 记录此 SessionID 属于哪个域名</li>
+<li>当用户第二次访问服务器的时候，请求会自动判断此域名下是否存在 Cookie 信息，如果存在自动将 Cookie 信息也发送给服务端，服务端会从 Cookie 中获取 SessionID，再根据 SessionID 查找对应的 Session 信息，如果没有找到说明用户没有登录或者登录失效，如果找到 Session 证明用户已经登录可执行后面操作。</li>
+</ul>
+</li>
+</ul>
+<p>根据以上流程可知，<strong>SessionID 是连接 Cookie 和 Session 的一道桥梁</strong>，大部分系统也是根据此原理来验证用户登录状态。</p>
+<h2 id="Cookie-和-Session-的区别"><a href="#Cookie-和-Session-的区别" class="headerlink" title="Cookie 和 Session 的区别"></a>Cookie 和 Session 的区别</h2><ul>
+<li><strong>安全性：</strong> Session 比 Cookie 安全，Session 是存储在服务器端的，Cookie 是存储在客户端的。</li>
+<li><strong>存取值的类型不同</strong>：Cookie 只支持存字符串数据，想要设置其他类型的数据，需要将其转换成字符串，Session 可以存任意数据类型。</li>
+<li><strong>有效期不同：</strong> Cookie 可设置为长时间保持，比如我们经常使用的默认登录功能，Session 一般失效时间较短，客户端关闭（默认情况下）或者 Session 超时都会失效。</li>
+<li><strong>存储大小不同：</strong> 单个 Cookie 保存的数据不能超过 4K，Session 可存储数据远高于 Cookie，但是当访问量过多，会占用过多的服务器资源。</li>
+</ul>
+<h2 id="什么是-Token（令牌）"><a href="#什么是-Token（令牌）" class="headerlink" title="什么是 Token（令牌）"></a>什么是 Token（令牌）</h2><h3 id="Acesss-Token"><a href="#Acesss-Token" class="headerlink" title="Acesss Token"></a>Acesss Token</h3><ul>
+<li><strong>访问资源接口（API）时所需要的资源凭证</strong></li>
+<li><strong>简单 token 的组成：</strong> uid(用户唯一的身份标识)、time(当前时间的时间戳)、sign（签名，token 的前几位以哈希算法压缩成的一定长度的十六进制字符串）</li>
+<li>特点：<ul>
+<li><strong>服务端无状态化、可扩展性好</strong></li>
+<li><strong>支持移动端设备</strong></li>
+<li>安全</li>
+<li>支持跨程序调用</li>
+</ul>
+</li>
+<li><strong>token 的身份验证流程：</strong></li>
+</ul>
+<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230507144301712.png" srcset="/img/loading.gif" lazyload alt="image-20230507144301712"></p>
+<ol>
+<li>客户端使用用户名跟密码请求登录</li>
+<li>服务端收到请求，去验证用户名与密码</li>
+<li>验证成功后，服务端会签发一个 token 并把这个 token 发送给客户端</li>
+<li>客户端收到 token 以后，会把它存储起来，比如放在 cookie 里或者 localStorage 里</li>
+<li>客户端每次向服务端请求资源的时候需要带着服务端签发的 token</li>
+<li>服务端收到请求，然后去验证客户端请求里面带着的 token ，如果验证成功，就向客户端返回请求的数据</li>
+</ol>
+<ul>
+<li><strong>每一次请求都需要携带 token，需要把 token 放到 HTTP 的 Header 里</strong></li>
+<li><strong>基于 token 的用户认证是一种服务端无状态的认证方式，服务端不用存放 token 数据。用解析 token 的计算时间换取 session 的存储空间，从而减轻服务器的压力，减少频繁的查询数据库</strong></li>
+<li><strong>token 完全由应用管理，所以它可以避开同源策略</strong></li>
+</ul>
+<h3 id="Refresh-Token"><a href="#Refresh-Token" class="headerlink" title="Refresh Token"></a>Refresh Token</h3><ul>
+<li>另外一种 token——refresh token</li>
+<li>refresh token 是专用于刷新 access token 的 token。如果没有 refresh token，也可以刷新 access token，但每次刷新都要用户输入登录用户名与密码，会很麻烦。有了 refresh token，可以减少这个麻烦，客户端直接用 refresh token 去更新 access token，无需用户进行额外的操作。</li>
+</ul>
+<p><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/29/16f523a04d1c887b~tplv-t2oaga2asx-zoom-in-crop-mark:3024:0:0:0.awebp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<ul>
+<li>Access Token 的有效期比较短，当 Acesss Token 由于过期而失效时，使用 Refresh Token 就可以获取到新的 Token，如果 Refresh Token 也失效了，用户就只能重新登录了。</li>
+<li>Refresh Token 及过期时间是存储在服务器的数据库中，只有在申请新的 Acesss Token 时才会验证，不会对业务接口响应时间造成影响，也不需要向 Session 一样一直保持在内存中以应对大量的请求。</li>
+</ul>
+<h2 id="什么是-JWT"><a href="#什么是-JWT" class="headerlink" title="什么是 JWT"></a>什么是 JWT</h2><ol>
+<li><p>JSON Web Token（简称 JWT）是目前最流行的<strong>跨域认证</strong>解决方案。</p>
+</li>
+<li><p>JWT是一种<strong>认证授权机制</strong>。</p>
+</li>
+<li><p>JWT是为了在网络应用环境间<strong>传递声明</strong>而执行的一种基于 JSON 的开放标准（<a href="https://link.juejin.cn/?target=https://tools.ietf.org/html/rfc7519">RFC 7519</a>）。JWT 的声明一般被用来在身份提供者和服务提供者间传递被认证的用户身份信息，以便于从资源服务器获取资源。比如用在用户登录上。</p>
+</li>
+<li><p>JWT可以使用 HMAC 算法或者是 RSA 的公&#x2F;私秘钥对 JWT 进行签名。因为数字签名的存在，这些传递的信息是可信的。</p>
+</li>
+</ol>
+<h3 id="JWT消息构成"><a href="#JWT消息构成" class="headerlink" title="JWT消息构成"></a>JWT消息构成</h3><p>一个token分3部分，按顺序为</p>
+<ul>
+<li>头部（header)</li>
+<li>载荷（payload)</li>
+<li>签证（signature)</li>
+</ul>
+<h4 id="header"><a href="#header" class="headerlink" title="header"></a>header</h4><p>jwt的头部承载两部分信息：</p>
+<ul>
+<li>声明类型typ，这里是JWT</li>
+<li>声明加密的算法alg 通常直接使用 HMAC SHA256(写为HS256)</li>
+</ul>
+<p>完整的头部就像下面这样的JSON：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs bash">&#123;<br>  <span class="hljs-string">&#x27;typ&#x27;</span>: <span class="hljs-string">&#x27;JWT&#x27;</span>,<br>  <span class="hljs-string">&#x27;alg&#x27;</span>: <span class="hljs-string">&#x27;HS256&#x27;</span><br>&#125;<br></code></pre></td></tr></table></figure>
+
+<p>然后将头部进行base64加密（该加密是可以对称解密的),构成了第一部分.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs undefined">eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9<br></code></pre></td></tr></table></figure>
+
+<h4 id="playload"><a href="#playload" class="headerlink" title="playload"></a>playload</h4><p>载荷就是存放有效信息的地方。这个名字像是特指飞机上承载的货品，这些有效信息包含三个部分</p>
+<ul>
+<li>标准中注册的声明</li>
+<li>公共的声明</li>
+<li>私有的声明</li>
+</ul>
+<p><strong>标准中注册的声明</strong> (建议但不强制使用) ：</p>
+<ul>
+<li><strong>iss</strong>: jwt签发者</li>
+<li><strong>sub</strong>: jwt所面向的用户</li>
+<li><strong>aud</strong>: 接收jwt的一方</li>
+<li><strong>exp</strong>: jwt的过期时间，这个过期时间必须要大于签发时间</li>
+<li><strong>nbf</strong>: 定义在什么时间之前，该jwt都是不可用的.</li>
+<li><strong>iat</strong>: jwt的签发时间</li>
+<li><strong>jti</strong>: jwt的唯一身份标识，主要用来作为一次性token,从而回避重放攻击。</li>
+</ul>
+<p><strong>公共的声明</strong> ：<br>公共的声明可以添加任何的信息，一般添加用户的相关信息或其他业务需要的必要信息.但不建议添加敏感信息，因为该部分在客户端可解密.</p>
+<p><strong>私有的声明</strong> ：<br>私有声明是提供者和消费者所共同定义的声明，一般不建议存放敏感信息，因为base64是对称解密的，意味着该部分信息可以归类为明文信息。</p>
+<p>定义一个payload:</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;sub&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;1234567890&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;John Doe&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;admin&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+
+<p>然后将其进行base64加密，得到Jwt的第二部分。</p>
+<figure class="highlight gcode"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs gcode">eyJzdWIiOiIxMj<span class="hljs-name">M0</span><span class="hljs-symbol">NTY3</span>ODkwIiwibmFtZSI<span class="hljs-number">6</span>Ikpva<span class="hljs-name">G4</span>gR<span class="hljs-name">G9</span>lIiwiYWRtaW<span class="hljs-number">4</span>iO<span class="hljs-symbol">nRydWV9</span><br></code></pre></td></tr></table></figure>
+
+<h4 id="signature"><a href="#signature" class="headerlink" title="signature"></a>signature</h4><p>jwt的第三部分是一个签证信息，这个签证信息由三部分组成：</p>
+<ul>
+<li>header (base64后的)</li>
+<li>payload (base64后的)</li>
+<li>secret</li>
+</ul>
+<p>这个部分需要base64加密后的header和base64加密后的payload使用<code>.</code>连接组成的字符串，然后通过header中声明的加密方式进行加盐<code>secret</code>组合加密，然后就构成了jwt的第三部分。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs javascript"><span class="hljs-keyword">var</span> encodedString = <span class="hljs-title function_">base64UrlEncode</span>(header) + <span class="hljs-string">&#x27;.&#x27;</span> + <span class="hljs-title function_">base64UrlEncode</span>(payload);<br><br><span class="hljs-keyword">var</span> signature = <span class="hljs-title class_">HMACSHA256</span>(encodedString, <span class="hljs-string">&#x27;secret&#x27;</span>); <span class="hljs-comment">// TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ</span><br></code></pre></td></tr></table></figure>
+
+<p>将这三部分用<code>.</code>连接成一个完整的字符串,构成了最终的jwt:</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs css">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9<span class="hljs-selector-class">.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9</span><span class="hljs-selector-class">.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ</span><br></code></pre></td></tr></table></figure>
+
+<blockquote>
+<p><strong>注意：secret是保存在服务器端的，jwt的签发生成也是在服务器端的，secret就是用来进行jwt的签发和jwt的验证，所以，它就是你服务端的私钥，在任何场景都不应该流露出去。一旦客户端得知这个secret, 那就意味着客户端是可以自我签发jwt了。</strong></p>
+</blockquote>
+<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230507145225581.png" srcset="/img/loading.gif" lazyload alt="image-20230507145225581"></p>
+<h3 id="JWT认证流程"><a href="#JWT认证流程" class="headerlink" title="JWT认证流程"></a>JWT认证流程</h3><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230507144921676.png" srcset="/img/loading.gif" lazyload alt="image-20230507144921676"></p>
+<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230507145003057.png" srcset="/img/loading.gif" lazyload alt="image-20230507145003057"></p>
+<h3 id="JWT的用法"><a href="#JWT的用法" class="headerlink" title="JWT的用法"></a>JWT的用法</h3><p>客户端接收服务器返回的JWT，将其<strong>存储在Cookie或localStorage</strong>中。</p>
+<p>此后，客户端将在与服务器交互中都会带JWT。如果将它存储在Cookie中，就可以自动发送，<strong>但是不会跨域</strong>，因此一般是将它放入HTTP请求的Header Authorization字段中。 当跨域时，也可以将JWT被放置于POST请求的数据主体中。</p>
+<p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230507145355115.png" srcset="/img/loading.gif" lazyload alt="image-20230507145355115"></p>
+<h3 id="验证JWT"><a href="#验证JWT" class="headerlink" title="验证JWT"></a>验证JWT</h3><p><img src="https://wyk200341.oss-cn-hangzhou.aliyuncs.com/img/image-20230507145424403.png" srcset="/img/loading.gif" lazyload alt="image-20230507145424403"></p>
+<h2 id="Token-和-JWT-的区别"><a href="#Token-和-JWT-的区别" class="headerlink" title="Token 和 JWT 的区别"></a>Token 和 JWT 的区别</h2><p><strong>相同：</strong></p>
+<ul>
+<li>都是访问资源的令牌</li>
+<li>都可以记录用户的信息</li>
+<li>都是使服务端无状态化</li>
+<li>都是只有验证成功后，客户端才能访问服务端上受保护的资源</li>
+</ul>
+<p><strong>区别：</strong></p>
+<ul>
+<li>Token：服务端验证客户端发送过来的 Token 时，还需要查询数据库(为了提高性能，我们通常查询redis）获取用户信息，然后验证 Token 是否有效。</li>
+<li>JWT：将 Token 和 Payload 加密后存储于客户端，服务端只需要使用密钥解密进行校验（校验也是 JWT 自己实现的）即可，不需要查询或者减少查询数据库，因为 JWT 自包含了用户信息和加密的数据。</li>
+</ul>
+<h2 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h2><h3 id="使用-cookie-时需要考虑的问题"><a href="#使用-cookie-时需要考虑的问题" class="headerlink" title="使用 cookie 时需要考虑的问题"></a>使用 cookie 时需要考虑的问题</h3><ul>
+<li><strong>因为存储在客户端，容易被客户端篡改</strong>，使用前需要验证合法性</li>
+<li>不要存储敏感数据，比如用户密码，账户余额</li>
+<li>使用 httpOnly 在一定程度上提高安全性</li>
+<li>尽量减少 cookie 的体积，能存储的数据量不能超过 4kb</li>
+<li>设置正确的 domain 和 path，减少数据传输</li>
+<li><strong>cookie 无法跨域</strong></li>
+<li>一个浏览器针对一个网站最多存 20 个Cookie，浏览器一般只允许存放 300 个Cookie</li>
+<li><strong>移动端对 cookie 的支持不是很好，而 session 需要基于 cookie 实现，所以移动端常用的是 token</strong></li>
+</ul>
+<h3 id="使用-session-时需要考虑的问题"><a href="#使用-session-时需要考虑的问题" class="headerlink" title="使用 session 时需要考虑的问题"></a>使用 session 时需要考虑的问题</h3><ul>
+<li>将 session 存储在服务器里面，当用户同时在线量比较多时，这些 session 会占据较多的内存，需要在服务端定期的去清理过期的 session</li>
+<li>当网站采用<strong>集群部署</strong>的时候，会遇到多台 web 服务器之间如何做 session 共享的问题。因为 session 是由单个服务器创建的，但是处理用户请求的服务器不一定是那个创建 session 的服务器，那么该服务器就无法拿到之前已经放入到 session 中的登录凭证之类的信息了。</li>
+<li>当多个应用要共享 session 时，除了以上问题，还会遇到跨域问题，因为不同的应用可能部署的主机不一样，需要在各个应用做好 cookie 跨域的处理。</li>
+<li><strong>sessionId 是存储在 cookie 中的，假如浏览器禁止 cookie 或不支持 cookie 怎么办？</strong> 一般会把 sessionId 跟在 url 参数后面即重写 url，所以 session 不一定非得需要靠 cookie 实现</li>
+<li><strong>移动端对 cookie 的支持不是很好，而 session 需要基于 cookie 实现，所以移动端常用的是 token</strong></li>
+</ul>
+<h3 id="使用-token-时需要考虑的问题"><a href="#使用-token-时需要考虑的问题" class="headerlink" title="使用 token 时需要考虑的问题"></a>使用 token 时需要考虑的问题</h3><ul>
+<li>如果你认为用数据库来存储 token 会导致查询时间太长，可以选择放在内存当中。比如 redis 很适合你对 token 查询的需求。</li>
+<li><strong>token 完全由应用管理，所以它可以避开同源策略</strong></li>
+<li><strong>token 可以避免 CSRF 攻击(因为不需要 cookie 了)</strong></li>
+<li><strong>移动端对 cookie 的支持不是很好，而 session 需要基于 cookie 实现，所以移动端常用的是 token</strong></li>
+</ul>
+<h3 id="使用-JWT-时需要考虑的问题"><a href="#使用-JWT-时需要考虑的问题" class="headerlink" title="使用 JWT 时需要考虑的问题"></a>使用 JWT 时需要考虑的问题</h3><ul>
+<li>因为 JWT 并不依赖 Cookie 的，所以你可以使用任何域名提供你的 API 服务而不需要担心跨域资源共享问题（CORS）</li>
+<li>JWT 默认是不加密，但也是可以加密的。生成原始 Token 以后，可以用密钥再加密一次。</li>
+<li>JWT 不加密的情况下，不能将秘密数据写入 JWT。</li>
+<li>JWT 不仅可以用于认证，也可以用于交换信息。有效使用 JWT，可以降低服务器查询数据库的次数。</li>
+<li>JWT 最大的优势是服务器不再需要存储 Session，使得服务器认证鉴权业务可以方便扩展。但这也是 JWT 最大的缺点：由于服务器不需要存储 Session 状态，因此使用过程中无法废弃某个 Token 或者更改 Token 的权限。也就是说一旦 JWT 签发了，到期之前就会始终有效，除非服务器部署额外的逻辑。</li>
+<li>JWT 本身包含了认证信息，一旦泄露，任何人都可以获得该令牌的所有权限。为了减少盗用，JWT的有效期应该设置得比较短。对于一些比较重要的权限，使用时应该再次对用户进行认证。</li>
+<li>JWT 适合一次性的命令认证，颁发一个有效期极短的 JWT，即使暴露了危险也很小，由于每次操作都会生成新的 JWT，因此也没必要保存 JWT，真正实现无状态。</li>
+<li>为了减少盗用，JWT 不应该使用 HTTP 协议明码传输，要使用 HTTPS 协议传输。</li>
+</ul>
+<h3 id="分布式架构下-session-共享方案"><a href="#分布式架构下-session-共享方案" class="headerlink" title="分布式架构下 session 共享方案"></a>分布式架构下 session 共享方案</h3><h4 id="1-session-复制"><a href="#1-session-复制" class="headerlink" title="1. session 复制"></a>1. session 复制</h4><ul>
+<li>任何一个服务器上的 session 发生改变（增删改），该节点会把这个 session 的所有内容序列化，然后广播给所有其它节点，不管其他服务器需不需要 session ，以此来保证 session 同步</li>
+</ul>
+<p><strong>优点：</strong> 可容错，各个服务器间 session 能够实时响应。<br> <strong>缺点：</strong> 会对网络负荷造成一定压力，如果 session 量大的话可能会造成网络堵塞，拖慢服务器性能。</p>
+<h4 id="2-粘性-session-x2F-IP-绑定策略"><a href="#2-粘性-session-x2F-IP-绑定策略" class="headerlink" title="2. 粘性 session &#x2F;IP 绑定策略"></a>2. 粘性 session &#x2F;IP 绑定策略</h4><ul>
+<li><strong>采用 Ngnix 中的 ip_hash 机制，将某个 ip的所有请求都定向到同一台服务器上，即将用户与服务器绑定。</strong> 用户第一次请求时，负载均衡器将用户的请求转发到了 A 服务器上，如果负载均衡器设置了粘性 session 的话，那么用户以后的每次请求都会转发到 A 服务器上，相当于把用户和 A 服务器粘到了一块，这就是粘性 session 机制。</li>
+</ul>
+<p><strong>优点：</strong> 简单，不需要对 session 做任何处理。<br> <strong>缺点：</strong> 缺乏容错性，如果当前访问的服务器发生故障，用户被转移到第二个服务器上时，他的 session 信息都将失效。<br> <strong>适用场景：</strong> 发生故障对客户产生的影响较小；服务器发生故障是低概率事件 。<br> <strong>实现方式：</strong> 以 Nginx 为例，在 upstream 模块配置 ip_hash 属性即可实现粘性 session。</p>
+<h4 id="3-session-共享（常用）"><a href="#3-session-共享（常用）" class="headerlink" title="3. session 共享（常用）"></a>3. session 共享（常用）</h4><ul>
+<li>使用分布式缓存方案比如 Memcached 、Redis 来缓存 session，但是要求 Memcached 或 Redis 必须是集群</li>
+<li>把 session 放到 Redis 中存储，虽然架构上变得复杂，并且需要多访问一次 Redis ，但是这种方案带来的好处也是很大的：<ul>
+<li>实现了 session 共享；</li>
+<li>可以水平扩展（增加 Redis 服务器）；</li>
+<li>服务器重启 session 不丢失（不过也要注意 session 在 Redis 中的刷新&#x2F;失效机制）；</li>
+<li>不仅可以跨服务器 session 共享，甚至可以跨平台（例如网页端和 APP 端）</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/29/16f523a04fb8b4b8~tplv-t2oaga2asx-zoom-in-crop-mark:3024:0:0:0.awebp" srcset="/img/loading.gif" lazyload alt="img"></p>
+<h4 id="4-session-持久化"><a href="#4-session-持久化" class="headerlink" title="4. session 持久化"></a>4. session 持久化</h4><ul>
+<li>将 session 存储到数据库中，保证 session 的持久化</li>
+</ul>
+<p><strong>优点：</strong> 服务器出现问题，session 不会丢失<br> <strong>缺点：</strong> 如果网站的访问量很大，把 session 存储到数据库中，会对数据库造成很大压力，还需要增加额外的开销维护数据库。</p>
+<h2 id="总结：登录功能方式"><a href="#总结：登录功能方式" class="headerlink" title="总结：登录功能方式"></a>总结：登录功能方式</h2><p>基于上述的讲解，我们可以使用很多方式来使用系统的登录功能：</p>
+<ol>
+<li>单系统登录</li>
+</ol>
+<ul>
+<li>基于cookie和session的机制来实现单系统登录，无法满足集群部署</li>
+<li>为了满足集群部署，我们可以考虑实现session的共享，上述《分布式架构下 session 共享方案》已经提出，比如使用redis来存储session</li>
+</ul>
+<ol start="2">
+<li>单点登录</li>
+</ol>
+<ul>
+<li>使用token机制，用redis存储token</li>
+<li>使用JWT机制</li>
+</ul>
+<blockquote>
+<p>参考链接:<a target="_blank" rel="noopener" href="https://juejin.cn/post/6844904034181070861#heading-26">https://juejin.cn/post/6844904034181070861#heading-26</a></p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E9%A1%B9%E7%9B%AE%E5%8A%9F%E8%83%BD/" class="category-chain-item">项目功能</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E9%A1%B9%E7%9B%AE%E5%8A%9F%E8%83%BD/">#项目功能</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Cookie、Session、Token、JWT讲解</div>
+      <div>http://example.com/2023/05/07/Cookie、Session、Token、JWT讲解/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>程序员小魏</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2023年5月7日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2023/04/15/MySQL%E9%94%81%E6%80%BB%E7%BB%93/" title="MySQL锁总结">
+                        <span class="hidden-mobile">MySQL锁总结</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+  <div id="valine"></div>
+  <script type="text/javascript">
+    Fluid.utils.loadComments('#valine', function() {
+      Fluid.utils.createScript('https://lib.baomitu.com/valine/1.5.1/Valine.min.js', function() {
+        var options = Object.assign(
+          {"appId":"l6YWrDG6zdbBheC4FYWffssk-MdYXbMMI","appKey":"JGIpLOPqsRK2CsLhfjzvIEtc","path":"window.location.pathname","placeholder":"留言仅限讨论，禁止广告等行为","avatar":"retro","meta":["nick","mail","link"],"requiredFields":[],"pageSize":10,"lang":"zh-CN","highlight":false,"recordIP":false,"serverURLs":"https://l6ywrdg6.api.lncldglobal.com","emojiCDN":null,"emojiMaps":null,"enableQQ":false},
+          {
+            el: "#valine",
+            path: window.location.pathname
+          }
+        )
+        new Valine(options);
+        Fluid.utils.waitElementVisible('#valine .vcontent', () => {
+          var imgSelector = '#valine .vcontent img:not(.vemoji)';
+          Fluid.plugins.imageCaption(imgSelector);
+          Fluid.plugins.fancyBox(imgSelector);
+        })
+      });
+    });
+  </script>
+  <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> <div style="font-size: 0.85rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div>
+<div id="music_div" style="position: fixed; bottom: 0px; left: 30px;"> <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=110 src="//music.163.com/outchain/player?type=2&id=1974443814&auto=1&height=90"> </iframe> <script src="https://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script> <script src="/js/musicshow.js"></script> </div> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+  
+</div>
+
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.0/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.18.2/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/4.3.1/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+  
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/love.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/xiaoxingxing.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/xiaoxuehua.js"></script>
+<script src="//cdn.jsdelivr.net/gh/bynotes/texiao/source/js/caidai.js"></script>
+<script src="/js/star.js"></script>
+<script src="/js/renwu.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
