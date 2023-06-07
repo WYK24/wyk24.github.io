@@ -15,7 +15,7 @@
                 {
                     name: '起风了',
                     artist: '买辣椒也用券',
-                    url: 'http://m804.music.126.net/20230607141953/4dc4952aa534a0e044e2c9599a8b89fd/jdymusic/obj/wo3DlMOGwrbDjj7DisKw/28481716365/e62b/b339/991f/c39f4e87d52f6b48a5837f60d84f2a38.mp3?authSecret=00000188946c1e0002590aaba44624cf',
+                    url: 'http://m704.music.126.net/20230607145106/6faabb3b4bb5dc6bf8167b56c0d08b99/jdymusic/obj/wo3DlMOGwrbDjj7DisKw/28481716365/e62b/b339/991f/c39f4e87d52f6b48a5837f60d84f2a38.mp3?authSecret=000001889488b28a188b0aaba5fa03fa',
                     cover: 'http://p1.music.126.net/diGAyEmpymX8G7JcnElncQ==/109951163699673355.jpg?param=130y130'
                 },
                 {
@@ -27,7 +27,7 @@
                 {
                     name: '遗失的心跳',
                     artist: '洛./1个球',
-                    url: 'http://m704.music.126.net/20230607141456/fcab4d7e6bfa7ab2bf53f2f835f712b4/jdymusic/obj/wo3DlMOGwrbDjj7DisKw/21236409375/8e3b/08f5/f584/574df0cbb49daab44b7915bde1ce89b4.mp3?authSecret=00000188946794e01efd0aa46369b043',
+                    url: 'http://m704.music.126.net/20230607145025/fc6dd41a2d68d393c8d7c4ffc833abc4/jdymusic/obj/wo3DlMOGwrbDjj7DisKw/21236409375/8e3b/08f5/f584/574df0cbb49daab44b7915bde1ce89b4.mp3?authSecret=0000018894881382151d0aaba0aea49c',
                     cover: 'https://p1.music.126.net/xSsrTys10fu6UlAjVuRBtg==/109951165683609378.jpg?param=200y200'
                 },
                 {
