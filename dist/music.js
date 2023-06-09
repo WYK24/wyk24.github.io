@@ -34,7 +34,7 @@
                     name: '天若有情',
                     artist: '高杰杰杰杰',
                     url: '/mp3/tianruoyouqing.mp3',
-                    cover: 'http://p1.music.126.net/FCWD6ibS2JK2B3QAnXuzwQ==/109951167805892385.jpg?param=130y130'
+                    cover: 'http://p2.music.126.net/z39vNCPinYJG-OshCymUZA==/109951167198487305.jpg?param=130y130'
                 },
                 {
                     name: 'Letting Go',
