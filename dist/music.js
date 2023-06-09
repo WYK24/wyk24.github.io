@@ -29,8 +29,19 @@
                     artist: '赵雷',
                     url: '/mp3/wojide.mp3',
                     cover: 'http://p1.music.126.net/FCWD6ibS2JK2B3QAnXuzwQ==/109951167805892385.jpg?param=130y130'
+                },
+                {
+                    name: '天若有情',
+                    artist: '高杰杰杰杰',
+                    url: '/mp3/tianruoyouqing.mp3',
+                    cover: 'http://p1.music.126.net/FCWD6ibS2JK2B3QAnXuzwQ==/109951167805892385.jpg?param=130y130'
+                },
+                {
+                    name: 'Letting Go',
+                    artist: '蔡健雅',
+                    url: '/mp3/lettinggo.mp3',
+                    cover: 'http://p2.music.126.net/VTZde5VdBm_u2WH0Pc9HQQ==/109951165561227373.jpg?param=130y130'
                 }
-
             ]
         });
     }
