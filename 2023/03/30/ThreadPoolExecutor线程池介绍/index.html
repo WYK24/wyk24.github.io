@@ -27,7 +27,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/img/JUC.png">
 <meta property="article:published_time" content="2023-03-30T08:29:41.000Z">
-<meta property="article:modified_time" content="2023-04-24T12:58:18.791Z">
+<meta property="article:modified_time" content="2023-06-28T02:46:37.778Z">
 <meta property="article:author" content="程序员小魏">
 <meta property="article:tag" content="JUC">
 <meta name="twitter:card" content="summary_large_image">
@@ -267,7 +267,7 @@
         <i class="iconfont icon-chart"></i>
         
           <!-- compatible with older versions-->
-          17k 字
+          16k 字
         
       </span>
     
@@ -278,7 +278,7 @@
         
         
         
-          138 分钟
+          137 分钟
         
       </span>
     
@@ -437,7 +437,7 @@
 <li><p><code>handler</code>：当线程池所处理的任务数超过其承载容量或关闭后继续有任务提交时，所调用的拒绝策略</p>
 </li>
 </ul>
-<h4 id="核心参详解"><a href="#核心参详解" class="headerlink" title="核心参详解"></a>核心参详解</h4><p>ThreadPoolExecutor中包含了七大核心参数，如果需要对线程池进行定制化操作，需要对其中比较核心的参数进行一定程度的认识。</p>
+<h4 id="核心参数详解"><a href="#核心参数详解" class="headerlink" title="核心参数详解"></a>核心参数详解</h4><p>ThreadPoolExecutor中包含了七大核心参数，如果需要对线程池进行定制化操作，需要对其中比较核心的参数进行一定程度的认识。</p>
 <h5 id="corePoolSize"><a href="#corePoolSize" class="headerlink" title="corePoolSize"></a>corePoolSize</h5><p><code>ThreadPoolExecutor</code>会根据<code>corePoolSize</code>和<code>maximumPoolSize</code>在构造方法中设置的边界值自动调整池大小，也可以使用<code>setCorePoolSize</code>和<code>setMaximumPoolSize</code>动态更改，关于线程数量的自动调整分为以下两种场景：</p>
 <ul>
 <li><p><strong>线程数量小于<code>corePoolSize</code></strong></p>
@@ -449,14 +449,6 @@
 </li>
 </ul>
 <p>默认情况下，即使是核心线程也会在新任务到达时开始创建和启动，如果使用非空队列创建线程池，可以通过重写<code>prestartCoreThread</code>或<code>prestartAllCoreThreads</code>方法动态覆盖，进行线程预启动。</p>
-<p>在实际开发中，如果需要自定义线程数量，可以参考以下公式：</p>
-<p><img src="https://lilinchao.com/usr/uploads/2022/11/1106554336.jpg" srcset="/img/loading.gif" lazyload alt="43.ThreadPoolExecutor线程池状态和构造方法03.jpg"></p>
-<p><strong>其中参数含义如下</strong>：</p>
-<ul>
-<li><em>Ncpu</em>是处理器的核数目，可以通过<code>Runtime.getRuntime().availableProcessors()</code>获得</li>
-<li><em>Ucpu</em>是期望的CPU利用率，介于0-1之间</li>
-<li>W&#x2F;C是等待时间与计算时间的比率</li>
-</ul>
 <h5 id="keepAliveTime"><a href="#keepAliveTime" class="headerlink" title="keepAliveTime"></a>keepAliveTime</h5><ul>
 <li><code>keepAliveTime</code>参数用来设置空闲时间。</li>
 <li>如果池当前有多于<code>corePoolSize</code>数量的线程，多余的线程如果空闲时间超过将会被终止，这种机制减少了在任务数量较少时线程池资源消耗。</li>
@@ -616,7 +608,7 @@
 <ul>
 <li>不会接收新任务</li>
 <li>但已提交任务会执行完</li>
-<li>此方法不会阻塞调用线程的执行，比如如果主线程此时调用了这个shutDown方法，此时并不会阻塞主线程，如果主线程</li>
+<li>此方法不会阻塞调用线程的执行，比如如果主线程此时调用了这个shutDown方法，此时并不会阻塞主线程</li>
 </ul>
 </blockquote>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">void</span> <span class="hljs-title function_">shutdown</span><span class="hljs-params">()</span>;<br></code></pre></td></tr></table></figure>
