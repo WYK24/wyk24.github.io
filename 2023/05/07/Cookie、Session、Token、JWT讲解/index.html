@@ -27,7 +27,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="http://example.com/img/web.png">
 <meta property="article:published_time" content="2023-05-07T06:26:59.000Z">
-<meta property="article:modified_time" content="2023-06-17T14:27:52.048Z">
+<meta property="article:modified_time" content="2023-07-03T02:45:41.987Z">
 <meta property="article:author" content="程序员小魏">
 <meta property="article:tag" content="项目功能">
 <meta name="twitter:card" content="summary_large_image">
@@ -611,11 +611,11 @@
 <h3 id="分布式架构下-session-共享方案"><a href="#分布式架构下-session-共享方案" class="headerlink" title="分布式架构下 session 共享方案"></a>分布式架构下 session 共享方案</h3><h4 id="1-session-复制"><a href="#1-session-复制" class="headerlink" title="1. session 复制"></a>1. session 复制</h4><ul>
 <li>任何一个服务器上的 session 发生改变（增删改），该节点会把这个 session 的所有内容序列化，然后广播给所有其它节点，不管其他服务器需不需要 session ，以此来保证 session 同步</li>
 </ul>
-<p><strong>优点：</strong> 可容错，各个服务器间 session 能够实时响应。<br> <strong>缺点：</strong> 会对网络负荷造成一定压力，如果 session 量大的话可能会造成网络堵塞，拖慢服务器性能。</p>
+<p> <strong>优点：</strong> 可容错，各个服务器间 session 能够实时响应。<br> <strong>缺点：</strong> 会对网络负荷造成一定压力，如果 session 量大的话可能会造成网络堵塞，拖慢服务器性能。</p>
 <h4 id="2-粘性-session-x2F-IP-绑定策略"><a href="#2-粘性-session-x2F-IP-绑定策略" class="headerlink" title="2. 粘性 session &#x2F;IP 绑定策略"></a>2. 粘性 session &#x2F;IP 绑定策略</h4><ul>
 <li><strong>采用 Ngnix 中的 ip_hash 机制，将某个 ip的所有请求都定向到同一台服务器上，即将用户与服务器绑定。</strong> 用户第一次请求时，负载均衡器将用户的请求转发到了 A 服务器上，如果负载均衡器设置了粘性 session 的话，那么用户以后的每次请求都会转发到 A 服务器上，相当于把用户和 A 服务器粘到了一块，这就是粘性 session 机制。</li>
 </ul>
-<p><strong>优点：</strong> 简单，不需要对 session 做任何处理。<br> <strong>缺点：</strong> 缺乏容错性，如果当前访问的服务器发生故障，用户被转移到第二个服务器上时，他的 session 信息都将失效。<br> <strong>适用场景：</strong> 发生故障对客户产生的影响较小；服务器发生故障是低概率事件 。<br> <strong>实现方式：</strong> 以 Nginx 为例，在 upstream 模块配置 ip_hash 属性即可实现粘性 session。</p>
+<p> <strong>优点：</strong> 简单，不需要对 session 做任何处理。<br> <strong>缺点：</strong> 缺乏容错性，如果当前访问的服务器发生故障，用户被转移到第二个服务器上时，他的 session 信息都将失效。<br> <strong>适用场景：</strong> 发生故障对客户产生的影响较小；服务器发生故障是低概率事件 。<br> <strong>实现方式：</strong> 以 Nginx 为例，在 upstream 模块配置 ip_hash 属性即可实现粘性 session。</p>
 <h4 id="3-session-共享（常用）"><a href="#3-session-共享（常用）" class="headerlink" title="3. session 共享（常用）"></a>3. session 共享（常用）</h4><ul>
 <li>使用分布式缓存方案比如 Memcached 、Redis 来缓存 session，但是要求 Memcached 或 Redis 必须是集群</li>
 <li>把 session 放到 Redis 中存储，虽然架构上变得复杂，并且需要多访问一次 Redis ，但是这种方案带来的好处也是很大的：<ul>
@@ -630,7 +630,7 @@
 <h4 id="4-session-持久化"><a href="#4-session-持久化" class="headerlink" title="4. session 持久化"></a>4. session 持久化</h4><ul>
 <li>将 session 存储到数据库中，保证 session 的持久化</li>
 </ul>
-<p><strong>优点：</strong> 服务器出现问题，session 不会丢失<br> <strong>缺点：</strong> 如果网站的访问量很大，把 session 存储到数据库中，会对数据库造成很大压力，还需要增加额外的开销维护数据库。</p>
+<p> <strong>优点：</strong> 服务器出现问题，session 不会丢失<br> <strong>缺点：</strong> 如果网站的访问量很大，把 session 存储到数据库中，会对数据库造成很大压力，还需要增加额外的开销维护数据库。</p>
 <h2 id="总结：登录功能方式"><a href="#总结：登录功能方式" class="headerlink" title="总结：登录功能方式"></a>总结：登录功能方式</h2><p>基于上述的讲解，我们可以使用很多方式来使用系统的登录功能：</p>
 <ol>
 <li>单系统登录</li>
